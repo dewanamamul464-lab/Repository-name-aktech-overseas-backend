@@ -11,18 +11,34 @@ import java.util.List;
 
 public interface JobRepository extends JpaRepository<Job, Long> {
 
+    // =========================================================
+    // CHECK EXTERNAL JOB
+    // =========================================================
+
     boolean existsBySourceAndExternalJobId(
             String source,
             String externalJobId
     );
 
+    // =========================================================
+    // EMPLOYER JOBS
+    // =========================================================
+
     List<Job> findByEmployerId(Long employerId);
+
+    // =========================================================
+    // VERIFIED JOBS
+    // =========================================================
 
     List<Job> findByVerifiedTrue();
 
     Page<Job> findByVerifiedTrue(
             Pageable pageable
     );
+
+    // =========================================================
+    // JOB TYPE
+    // =========================================================
 
     List<Job> findByJobTypeIgnoreCase(
             String jobType
@@ -33,9 +49,17 @@ public interface JobRepository extends JpaRepository<Job, Long> {
             Pageable pageable
     );
 
+    // =========================================================
+    // ALL JOBS
+    // =========================================================
+
     Page<Job> findAllByOrderByIdDesc(
             Pageable pageable
     );
+
+    // =========================================================
+    // SEARCH JOBS
+    // =========================================================
 
     @Query("""
         SELECT j
@@ -53,6 +77,10 @@ public interface JobRepository extends JpaRepository<Job, Long> {
             Pageable pageable
     );
 
+    // =========================================================
+    // FIND JOBS BY TYPE
+    // =========================================================
+
     @Query("""
         SELECT j
         FROM Job j
@@ -64,6 +92,10 @@ public interface JobRepository extends JpaRepository<Job, Long> {
             @Param("jobType") String jobType,
             Pageable pageable
     );
+
+    // =========================================================
+    // SEARCH JOBS WITH TYPE
+    // =========================================================
 
     @Query("""
         SELECT j

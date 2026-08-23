@@ -6,6 +6,7 @@ import com.aktech.overseas.entity.Applicant;
 import com.aktech.overseas.entity.User;
 import com.aktech.overseas.repository.ApplicantRepository;
 import com.aktech.overseas.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -33,10 +34,14 @@ public class ApplicantService {
     // ==========================================
     // Create Applicant Profile
     // ==========================================
+
     public ApplicantDTO saveApplicant(ApplicantDTO dto) {
 
         if (applicantRepository.existsByEmail(dto.getEmail())) {
-            throw new RuntimeException("Email already registered");
+
+            throw new RuntimeException(
+                    "Email already registered"
+            );
         }
 
         String username = SecurityContextHolder
@@ -44,22 +49,48 @@ public class ApplicantService {
                 .getAuthentication()
                 .getName();
 
-        User user = userRepository.findByUsername(username)
+        User user = userRepository
+                .findByUsername(username)
                 .orElseThrow(() ->
-                        new RuntimeException("User not found"));
+                        new RuntimeException(
+                                "User not found"
+                        )
+                );
 
         Applicant applicant = new Applicant();
 
-        applicant.setFullName(dto.getFullName());
-        applicant.setEmail(dto.getEmail());
-        applicant.setPhone(dto.getPhone());
-        applicant.setCountry(dto.getCountry());
-        applicant.setExperience(dto.getExperience());
-        applicant.setSkills(dto.getSkills());
-        applicant.setPassportNumber(dto.getPassportNumber());
+        applicant.setFullName(
+                dto.getFullName()
+        );
+
+        applicant.setEmail(
+                dto.getEmail()
+        );
+
+        applicant.setPhone(
+                dto.getPhone()
+        );
+
+        applicant.setCountry(
+                dto.getCountry()
+        );
+
+        applicant.setExperience(
+                dto.getExperience()
+        );
+
+        applicant.setSkills(
+                dto.getSkills()
+        );
+
+        applicant.setPassportNumber(
+                dto.getPassportNumber()
+        );
+
         applicant.setUser(user);
 
-        Applicant saved = applicantRepository.save(applicant);
+        Applicant saved =
+                applicantRepository.save(applicant);
 
         return convertToDTO(saved);
     }
@@ -67,29 +98,46 @@ public class ApplicantService {
     // ==========================================
     // Upload CV
     // ==========================================
-    public FileUploadResponse uploadCV(MultipartFile file) {
+
+    public FileUploadResponse uploadCV(
+            MultipartFile file) {
 
         if (file == null || file.isEmpty()) {
-            throw new RuntimeException("Please select a CV file.");
+
+            throw new RuntimeException(
+                    "Please select a CV file."
+            );
         }
 
         try {
 
-            String username = SecurityContextHolder
-                    .getContext()
-                    .getAuthentication()
-                    .getName();
+            String username =
+                    SecurityContextHolder
+                            .getContext()
+                            .getAuthentication()
+                            .getName();
 
-            Applicant applicant = applicantRepository
-                    .findByUserUsername(username)
-                    .orElseThrow(() ->
-                            new RuntimeException("Applicant profile not found"));
+            Applicant applicant =
+                    applicantRepository
+                            .findByUserUsername(username)
+                            .orElseThrow(() ->
+                                    new RuntimeException(
+                                            "Applicant profile not found"
+                                    )
+                            );
 
-            String cvUrl = cloudinaryService.uploadCv(file);
+            String cvUrl =
+                    cloudinaryService.uploadCv(file);
 
-            applicant.setCvFileName(file.getOriginalFilename());
+            applicant.setCvFileName(
+                    file.getOriginalFilename()
+            );
+
             applicant.setCvUrl(cvUrl);
-            applicant.setCvUploadedAt(LocalDateTime.now());
+
+            applicant.setCvUploadedAt(
+                    LocalDateTime.now()
+            );
 
             applicantRepository.save(applicant);
 
@@ -102,33 +150,46 @@ public class ApplicantService {
         } catch (Exception e) {
 
             throw new RuntimeException(
-                    "CV upload failed: " + e.getMessage(), e);
-
+                    "CV upload failed: "
+                            + e.getMessage(),
+                    e
+            );
         }
     }
 
     // ==========================================
-// Upload Profile Image
-// ==========================================
-    public String uploadProfileImage(MultipartFile file) {
+    // Upload Profile Image
+    // ==========================================
+
+    public String uploadProfileImage(
+            MultipartFile file) {
 
         if (file == null || file.isEmpty()) {
-            throw new RuntimeException("Please select an image.");
+
+            throw new RuntimeException(
+                    "Please select an image."
+            );
         }
 
         try {
 
-            String username = SecurityContextHolder
-                    .getContext()
-                    .getAuthentication()
-                    .getName();
+            String username =
+                    SecurityContextHolder
+                            .getContext()
+                            .getAuthentication()
+                            .getName();
 
-            Applicant applicant = applicantRepository
-                    .findByUserUsername(username)
-                    .orElseThrow(() ->
-                            new RuntimeException("Applicant profile not found"));
+            Applicant applicant =
+                    applicantRepository
+                            .findByUserUsername(username)
+                            .orElseThrow(() ->
+                                    new RuntimeException(
+                                            "Applicant profile not found"
+                                    )
+                            );
 
-            String imageUrl = cloudinaryService.uploadProfileImage(file);
+            String imageUrl =
+                    cloudinaryService.uploadProfileImage(file);
 
             applicant.setProfileImage(imageUrl);
 
@@ -139,31 +200,40 @@ public class ApplicantService {
         } catch (Exception e) {
 
             throw new RuntimeException(
-                    "Profile image upload failed: " + e.getMessage(), e);
-
+                    "Profile image upload failed: "
+                            + e.getMessage(),
+                    e
+            );
         }
     }
 
     // ==========================================
     // Applicant View Own CV
     // ==========================================
+
     public String getMyCV() {
 
-        String username = SecurityContextHolder
-                .getContext()
-                .getAuthentication()
-                .getName();
+        String username =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication()
+                        .getName();
 
-        Applicant applicant = applicantRepository
-                .findByUserUsername(username)
-                .orElseThrow(() ->
-                        new RuntimeException("Applicant profile not found"));
+        Applicant applicant =
+                applicantRepository
+                        .findByUserUsername(username)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Applicant profile not found"
+                                )
+                        );
 
         if (applicant.getCvUrl() == null ||
                 applicant.getCvUrl().isBlank()) {
 
-            throw new RuntimeException("No CV uploaded.");
-
+            throw new RuntimeException(
+                    "No CV uploaded."
+            );
         }
 
         return applicant.getCvUrl();
@@ -172,18 +242,24 @@ public class ApplicantService {
     // ==========================================
     // View CV By Applicant ID
     // ==========================================
+
     public String downloadCV(Long applicantId) {
 
         Applicant applicant =
-                applicantRepository.findById(applicantId)
+                applicantRepository
+                        .findById(applicantId)
                         .orElseThrow(() ->
-                                new RuntimeException("Applicant not found"));
+                                new RuntimeException(
+                                        "Applicant not found"
+                                )
+                        );
 
         if (applicant.getCvUrl() == null ||
                 applicant.getCvUrl().isBlank()) {
 
-            throw new RuntimeException("CV has not been uploaded.");
-
+            throw new RuntimeException(
+                    "CV has not been uploaded."
+            );
         }
 
         return applicant.getCvUrl();
@@ -192,6 +268,7 @@ public class ApplicantService {
     // ==========================================
     // Get My Profile
     // ==========================================
+
     public ApplicantDTO getMyProfile() {
 
         String username =
@@ -204,7 +281,10 @@ public class ApplicantService {
                 applicantRepository
                         .findByUserUsername(username)
                         .orElseThrow(() ->
-                                new RuntimeException("Applicant profile not found"));
+                                new RuntimeException(
+                                        "Applicant profile not found"
+                                )
+                        );
 
         return convertToDTO(applicant);
     }
@@ -212,21 +292,32 @@ public class ApplicantService {
     // ==========================================
     // Update My Profile
     // ==========================================
-    public ApplicantDTO updateMyProfile(ApplicantDTO dto) {
 
-        String username = SecurityContextHolder
-                .getContext()
-                .getAuthentication()
-                .getName();
+    public ApplicantDTO updateMyProfile(
+            ApplicantDTO dto) {
 
-        Applicant applicant = applicantRepository
-                .findByUserUsername(username)
-                .orElseThrow(() ->
-                        new RuntimeException("Applicant profile not found"));
+        String username =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication()
+                        .getName();
 
-        updateFields(applicant, dto);
+        Applicant applicant =
+                applicantRepository
+                        .findByUserUsername(username)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Applicant profile not found"
+                                )
+                        );
 
-        Applicant saved = applicantRepository.save(applicant);
+        updateFields(
+                applicant,
+                dto
+        );
+
+        Applicant saved =
+                applicantRepository.save(applicant);
 
         return convertToDTO(saved);
     }
@@ -234,9 +325,11 @@ public class ApplicantService {
     // ==========================================
     // Get All Applicants
     // ==========================================
+
     public List<ApplicantDTO> getAllApplicants() {
 
-        return applicantRepository.findAll()
+        return applicantRepository
+                .findAll()
                 .stream()
                 .map(this::convertToDTO)
                 .toList();
@@ -245,11 +338,18 @@ public class ApplicantService {
     // ==========================================
     // Get Applicant By ID
     // ==========================================
-    public ApplicantDTO getApplicantById(Long id) {
 
-        Applicant applicant = applicantRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Applicant not found"));
+    public ApplicantDTO getApplicantById(
+            Long id) {
+
+        Applicant applicant =
+                applicantRepository
+                        .findById(id)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Applicant not found"
+                                )
+                        );
 
         return convertToDTO(applicant);
     }
@@ -257,83 +357,219 @@ public class ApplicantService {
     // ==========================================
     // Update Applicant (Admin)
     // ==========================================
-    public ApplicantDTO updateApplicant(Long id,
-                                        ApplicantDTO dto) {
 
-        Applicant applicant = applicantRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Applicant not found"));
+    public ApplicantDTO updateApplicant(
+            Long id,
+            ApplicantDTO dto) {
 
-        updateFields(applicant, dto);
+        Applicant applicant =
+                applicantRepository
+                        .findById(id)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Applicant not found"
+                                )
+                        );
 
-        Applicant saved = applicantRepository.save(applicant);
+        updateFields(
+                applicant,
+                dto
+        );
+
+        Applicant saved =
+                applicantRepository.save(applicant);
 
         return convertToDTO(saved);
     }
 
     // ==========================================
-    // Delete Applicant
+    // DELETE APPLICANT
+    //
+    // Deletes:
+    //
+    // 1. Applicant's job applications
+    // 2. Applicant profile
+    // 3. Applicant User/login account
+    //
+    // After deletion:
+    //
+    // - Applicant disappears from admin
+    // - Username becomes available again
+    // - Email becomes available again
+    // - Applicant can register again
     // ==========================================
+
+    @Transactional
     public void deleteApplicant(Long id) {
 
-        Applicant applicant = applicantRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Applicant not found"));
+        // -----------------------------------------------------
+        // Find applicant
+        // -----------------------------------------------------
+
+        Applicant applicant =
+                applicantRepository
+                        .findById(id)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Applicant not found"
+                                )
+                        );
+
+        // -----------------------------------------------------
+        // Save associated User before deleting Applicant
+        // -----------------------------------------------------
+
+        User user = applicant.getUser();
+
+        // -----------------------------------------------------
+        // Delete Applicant
+        //
+        // Applicant has:
+        //
+        // cascade = CascadeType.ALL
+        // orphanRemoval = true
+        //
+        // on the applications relationship.
+        //
+        // Therefore the applicant's job applications are
+        // deleted together with the applicant.
+        // -----------------------------------------------------
 
         applicantRepository.delete(applicant);
+
+        // -----------------------------------------------------
+        // Delete User/login account
+        // -----------------------------------------------------
+
+        if (user != null) {
+
+            userRepository.delete(user);
+        }
     }
 
     // ==========================================
     // Update Common Fields
     // ==========================================
-    private void updateFields(Applicant applicant,
-                              ApplicantDTO dto) {
 
-        applicant.setFullName(dto.getFullName());
-        applicant.setEmail(dto.getEmail());
-        applicant.setPhone(dto.getPhone());
-        applicant.setCountry(dto.getCountry());
-        applicant.setExperience(dto.getExperience());
-        applicant.setSkills(dto.getSkills());
-        applicant.setPassportNumber(dto.getPassportNumber());
+    private void updateFields(
+            Applicant applicant,
+            ApplicantDTO dto) {
+
+        applicant.setFullName(
+                dto.getFullName()
+        );
+
+        applicant.setEmail(
+                dto.getEmail()
+        );
+
+        applicant.setPhone(
+                dto.getPhone()
+        );
+
+        applicant.setCountry(
+                dto.getCountry()
+        );
+
+        applicant.setExperience(
+                dto.getExperience()
+        );
+
+        applicant.setSkills(
+                dto.getSkills()
+        );
+
+        applicant.setPassportNumber(
+                dto.getPassportNumber()
+        );
 
         if (dto.getCvFileName() != null) {
-            applicant.setCvFileName(dto.getCvFileName());
+
+            applicant.setCvFileName(
+                    dto.getCvFileName()
+            );
         }
 
         if (dto.getCvUrl() != null) {
-            applicant.setCvUrl(dto.getCvUrl());
+
+            applicant.setCvUrl(
+                    dto.getCvUrl()
+            );
         }
 
         if (dto.getCvUploadedAt() != null) {
-            applicant.setCvUploadedAt(dto.getCvUploadedAt());
+
+            applicant.setCvUploadedAt(
+                    dto.getCvUploadedAt()
+            );
         }
 
         if (dto.getProfileImage() != null) {
-            applicant.setProfileImage(dto.getProfileImage());
+
+            applicant.setProfileImage(
+                    dto.getProfileImage()
+            );
         }
     }
+
     // ==========================================
-// Convert Entity -> DTO
-// ==========================================
-    private ApplicantDTO convertToDTO(Applicant applicant) {
+    // Convert Entity -> DTO
+    // ==========================================
 
-        ApplicantDTO dto = new ApplicantDTO();
+    private ApplicantDTO convertToDTO(
+            Applicant applicant) {
 
-        dto.setId(applicant.getId());
-        dto.setFullName(applicant.getFullName());
-        dto.setEmail(applicant.getEmail());
-        dto.setPhone(applicant.getPhone());
-        dto.setCountry(applicant.getCountry());
-        dto.setExperience(applicant.getExperience());
-        dto.setSkills(applicant.getSkills());
-        dto.setPassportNumber(applicant.getPassportNumber());
+        ApplicantDTO dto =
+                new ApplicantDTO();
 
-        dto.setCvFileName(applicant.getCvFileName());
-        dto.setCvUrl(applicant.getCvUrl());
-        dto.setCvUploadedAt(applicant.getCvUploadedAt());
+        dto.setId(
+                applicant.getId()
+        );
 
-        dto.setProfileImage(applicant.getProfileImage());
+        dto.setFullName(
+                applicant.getFullName()
+        );
+
+        dto.setEmail(
+                applicant.getEmail()
+        );
+
+        dto.setPhone(
+                applicant.getPhone()
+        );
+
+        dto.setCountry(
+                applicant.getCountry()
+        );
+
+        dto.setExperience(
+                applicant.getExperience()
+        );
+
+        dto.setSkills(
+                applicant.getSkills()
+        );
+
+        dto.setPassportNumber(
+                applicant.getPassportNumber()
+        );
+
+        dto.setCvFileName(
+                applicant.getCvFileName()
+        );
+
+        dto.setCvUrl(
+                applicant.getCvUrl()
+        );
+
+        dto.setCvUploadedAt(
+                applicant.getCvUploadedAt()
+        );
+
+        dto.setProfileImage(
+                applicant.getProfileImage()
+        );
 
         return dto;
-    }}
+    }
+}
