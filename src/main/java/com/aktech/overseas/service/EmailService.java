@@ -1,5 +1,4 @@
-
-        package com.aktech.overseas.service;
+package com.aktech.overseas.service;
 
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -51,15 +50,18 @@ public class EmailService {
             mailSender.send(message);
 
             System.out.println(
-                    "Applicant registration email sent to: "
+                    "SUCCESS: Applicant registration email sent to: "
                             + applicantEmail
             );
 
         } catch (Exception e) {
-            System.out.println(
-                    "Failed to send applicant registration email: "
-                            + e.getMessage()
+
+            System.err.println(
+                    "FAILED: Applicant registration email to: "
+                            + applicantEmail
             );
+
+            e.printStackTrace();
         }
     }
 
@@ -103,15 +105,18 @@ public class EmailService {
             mailSender.send(message);
 
             System.out.println(
-                    "Application submitted email sent to: "
+                    "SUCCESS: Application submitted email sent to: "
                             + applicantEmail
             );
 
         } catch (Exception e) {
-            System.out.println(
-                    "Failed to send application submitted email: "
-                            + e.getMessage()
+
+            System.err.println(
+                    "FAILED: Application submitted email to: "
+                            + applicantEmail
             );
+
+            e.printStackTrace();
         }
     }
 
@@ -172,15 +177,18 @@ public class EmailService {
             mailSender.send(message);
 
             System.out.println(
-                    "Application status email sent to: "
+                    "SUCCESS: Application status email sent to: "
                             + applicantEmail
             );
 
         } catch (Exception e) {
-            System.out.println(
-                    "Failed to send application status email: "
-                            + e.getMessage()
+
+            System.err.println(
+                    "FAILED: Application status email to: "
+                            + applicantEmail
             );
+
+            e.printStackTrace();
         }
     }
 
@@ -227,15 +235,18 @@ public class EmailService {
             mailSender.send(message);
 
             System.out.println(
-                    "Employer registration email sent to admin: "
+                    "SUCCESS: Employer registration email sent to admin: "
                             + adminEmail
             );
 
         } catch (Exception e) {
-            System.out.println(
-                    "Failed to send employer registration email: "
-                            + e.getMessage()
+
+            System.err.println(
+                    "FAILED: Employer registration email to admin: "
+                            + adminEmail
             );
+
+            e.printStackTrace();
         }
     }
 
@@ -278,15 +289,18 @@ public class EmailService {
             mailSender.send(message);
 
             System.out.println(
-                    "Employer approval email sent to: "
+                    "SUCCESS: Employer approval email sent to: "
                             + employerEmail
             );
 
         } catch (Exception e) {
-            System.out.println(
-                    "Failed to send employer approval email: "
-                            + e.getMessage()
+
+            System.err.println(
+                    "FAILED: Employer approval email to: "
+                            + employerEmail
             );
+
+            e.printStackTrace();
         }
     }
 
@@ -326,16 +340,18 @@ public class EmailService {
             mailSender.send(message);
 
             System.out.println(
-                    "Employer rejection email sent to: "
+                    "SUCCESS: Employer rejection email sent to: "
                             + employerEmail
             );
 
         } catch (Exception e) {
-            System.out.println(
-                    "Failed to send employer rejection email: "
-                            + e.getMessage()
+
+            System.err.println(
+                    "FAILED: Employer rejection email to: "
+                            + employerEmail
             );
+
+            e.printStackTrace();
         }
     }
 }
-
