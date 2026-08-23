@@ -1,8 +1,10 @@
-package com.aktech.overseas.security;
+
+        package com.aktech.overseas.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -12,16 +14,41 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    private static final String SECRET =
-            System.getenv("JWT_SECRET");
+    private final SecretKey key;
 
-    private final SecretKey key =
-            Keys.hmacShaKeyFor(
-                    SECRET.getBytes(StandardCharsets.UTF_8)
+    // =========================================================
+    // CONSTRUCTOR
+    // =========================================================
+
+    public JwtUtil(
+            @Value("${jwt.secret}") String secret) {
+
+        if (secret == null || secret.trim().isEmpty()) {
+            throw new IllegalStateException(
+                    "JWT secret is not configured. "
+                            + "Please set jwt.secret in application.properties "
+                            + "or the JWT_SECRET environment variable."
             );
+        }
 
-    // Generate JWT Token
-    public String generateToken(String username, String role) {
+        if (secret.getBytes(StandardCharsets.UTF_8).length < 32) {
+            throw new IllegalStateException(
+                    "JWT secret must be at least 32 bytes long."
+            );
+        }
+
+        this.key = Keys.hmacShaKeyFor(
+                secret.getBytes(StandardCharsets.UTF_8)
+        );
+    }
+
+    // =========================================================
+    // GENERATE JWT TOKEN
+    // =========================================================
+
+    public String generateToken(
+            String username,
+            String role) {
 
         return Jwts.builder()
                 .subject(username)
@@ -30,14 +57,17 @@ public class JwtUtil {
                 .expiration(
                         new Date(
                                 System.currentTimeMillis()
-                                        + 1000 * 60 * 60
+                                        + 1000L * 60 * 60
                         )
                 )
                 .signWith(key)
                 .compact();
     }
 
-    // Read Claims
+    // =========================================================
+    // READ CLAIMS
+    // =========================================================
+
     private Claims getClaims(String token) {
 
         return Jwts.parser()
@@ -47,27 +77,46 @@ public class JwtUtil {
                 .getPayload();
     }
 
-    // Extract Username
+    // =========================================================
+    // EXTRACT USERNAME
+    // =========================================================
+
     public String extractUsername(String token) {
 
-        return getClaims(token).getSubject();
+        return getClaims(token)
+                .getSubject();
     }
 
-    // Extract Role
+    // =========================================================
+    // EXTRACT ROLE
+    // =========================================================
+
     public String extractRole(String token) {
 
         return getClaims(token)
                 .get("role", String.class);
     }
 
-    // Validate Token
+    // =========================================================
+    // VALIDATE TOKEN
+    // =========================================================
+
     public boolean isTokenValid(
             String token,
             String username) {
 
-        return extractUsername(token).equals(username)
-                && getClaims(token)
-                        .getExpiration()
-                        .after(new Date());
+        try {
+
+            Claims claims = getClaims(token);
+
+            return claims.getSubject().equals(username)
+                    && claims.getExpiration()
+                    .after(new Date());
+
+        } catch (Exception e) {
+
+            return false;
+        }
     }
 }
+

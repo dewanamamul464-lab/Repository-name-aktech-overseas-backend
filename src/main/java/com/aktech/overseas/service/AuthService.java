@@ -29,11 +29,6 @@ public class AuthService {
     private final JwtUtil jwtUtil;
     private final EmailService emailService;
 
-    /*
-     * Loaded from application.properties:
-     *
-     * app.admin.email=your-admin-email@gmail.com
-     */
     @Value("${app.admin.email}")
     private String adminEmail;
 
@@ -61,7 +56,7 @@ public class AuthService {
     public String register(RegisterRequest request) {
 
         // -----------------------------------------------------
-        // Check username
+        // CHECK USERNAME
         // -----------------------------------------------------
 
         if (userRepository
@@ -74,7 +69,7 @@ public class AuthService {
         }
 
         // -----------------------------------------------------
-        // Check applicant email
+        // CHECK APPLICANT EMAIL
         // -----------------------------------------------------
 
         if (applicantRepository
@@ -86,7 +81,7 @@ public class AuthService {
         }
 
         // -----------------------------------------------------
-        // Check employer email
+        // CHECK EMPLOYER EMAIL
         // -----------------------------------------------------
 
         if (employerRepository
@@ -99,7 +94,7 @@ public class AuthService {
         }
 
         // -----------------------------------------------------
-        // Create User
+        // CREATE USER
         // -----------------------------------------------------
 
         User user = new User();
@@ -114,12 +109,14 @@ public class AuthService {
                 )
         );
 
-        user.setRole(Role.APPLICANT);
+        user.setRole(
+                Role.APPLICANT
+        );
 
         user = userRepository.save(user);
 
         // -----------------------------------------------------
-        // Create Applicant Profile
+        // CREATE APPLICANT PROFILE
         // -----------------------------------------------------
 
         Applicant applicant = new Applicant();
@@ -146,6 +143,20 @@ public class AuthService {
 
         applicantRepository.save(applicant);
 
+        // -----------------------------------------------------
+        // SEND WELCOME EMAIL TO APPLICANT
+        // -----------------------------------------------------
+
+        emailService.sendApplicantRegistrationEmail(
+                applicant.getEmail(),
+                applicant.getFullName(),
+                user.getUsername()
+        );
+
+        // -----------------------------------------------------
+        // RETURN SUCCESS
+        // -----------------------------------------------------
+
         return "Applicant registered successfully.";
     }
 
@@ -158,7 +169,7 @@ public class AuthService {
             EmployerRegisterRequest request) {
 
         // -----------------------------------------------------
-        // Check username
+        // CHECK USERNAME
         // -----------------------------------------------------
 
         if (userRepository
@@ -171,7 +182,7 @@ public class AuthService {
         }
 
         // -----------------------------------------------------
-        // Check employer email
+        // CHECK EMPLOYER EMAIL
         // -----------------------------------------------------
 
         if (employerRepository
@@ -184,7 +195,7 @@ public class AuthService {
         }
 
         // -----------------------------------------------------
-        // Check applicant email
+        // CHECK APPLICANT EMAIL
         // -----------------------------------------------------
 
         if (applicantRepository
@@ -196,7 +207,7 @@ public class AuthService {
         }
 
         // -----------------------------------------------------
-        // Create User
+        // CREATE USER
         // -----------------------------------------------------
 
         User user = new User();
@@ -211,20 +222,14 @@ public class AuthService {
                 )
         );
 
-        /*
-         * The account has the EMPLOYER role,
-         * but the Employer profile is PENDING.
-         *
-         * AuthService.login() will block this account
-         * until an administrator approves it.
-         */
-
-        user.setRole(Role.EMPLOYER);
+        user.setRole(
+                Role.EMPLOYER
+        );
 
         user = userRepository.save(user);
 
         // -----------------------------------------------------
-        // Create Employer Profile
+        // CREATE EMPLOYER PROFILE
         // -----------------------------------------------------
 
         Employer employer = new Employer();
@@ -264,7 +269,7 @@ public class AuthService {
         );
 
         // -----------------------------------------------------
-        // ALWAYS START AS PENDING
+        // EMPLOYER ALWAYS STARTS AS PENDING
         // -----------------------------------------------------
 
         employer.setStatus(
@@ -284,6 +289,10 @@ public class AuthService {
                 employer.getCompanyName()
         );
 
+        // -----------------------------------------------------
+        // RETURN SUCCESS
+        // -----------------------------------------------------
+
         return "Employer registration submitted successfully. "
                 + "Your account is waiting for admin approval.";
     }
@@ -296,7 +305,7 @@ public class AuthService {
             LoginRequest request) {
 
         // -----------------------------------------------------
-        // Find User
+        // FIND USER
         // -----------------------------------------------------
 
         User user = userRepository
@@ -308,7 +317,7 @@ public class AuthService {
                 );
 
         // -----------------------------------------------------
-        // Check Password
+        // CHECK PASSWORD
         // -----------------------------------------------------
 
         if (!passwordEncoder.matches(
@@ -383,7 +392,7 @@ public class AuthService {
         );
 
         // =====================================================
-        // USER DTO
+        // CREATE USER DTO
         // =====================================================
 
         UserDTO userDTO = new UserDTO(
