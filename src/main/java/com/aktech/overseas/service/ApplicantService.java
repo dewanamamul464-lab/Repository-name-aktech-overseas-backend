@@ -3,13 +3,16 @@ package com.aktech.overseas.service;
 import com.aktech.overseas.dto.ApplicantDTO;
 import com.aktech.overseas.dto.FileUploadResponse;
 import com.aktech.overseas.entity.Applicant;
+import com.aktech.overseas.entity.JobApplication;
 import com.aktech.overseas.entity.User;
 import com.aktech.overseas.repository.ApplicantRepository;
+import com.aktech.overseas.repository.JobApplicationRepository;
 import com.aktech.overseas.repository.UserRepository;
-import jakarta.transaction.Transactional;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
+import jakarta.transaction.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -19,29 +22,28 @@ public class ApplicantService {
 
     private final ApplicantRepository applicantRepository;
     private final UserRepository userRepository;
+    private final JobApplicationRepository jobApplicationRepository;
     private final CloudinaryService cloudinaryService;
 
     public ApplicantService(
             ApplicantRepository applicantRepository,
             UserRepository userRepository,
+            JobApplicationRepository jobApplicationRepository,
             CloudinaryService cloudinaryService) {
 
         this.applicantRepository = applicantRepository;
         this.userRepository = userRepository;
+        this.jobApplicationRepository = jobApplicationRepository;
         this.cloudinaryService = cloudinaryService;
     }
 
     // ==========================================
     // Create Applicant Profile
     // ==========================================
-
     public ApplicantDTO saveApplicant(ApplicantDTO dto) {
 
         if (applicantRepository.existsByEmail(dto.getEmail())) {
-
-            throw new RuntimeException(
-                    "Email already registered"
-            );
+            throw new RuntimeException("Email already registered");
         }
 
         String username = SecurityContextHolder
@@ -49,44 +51,19 @@ public class ApplicantService {
                 .getAuthentication()
                 .getName();
 
-        User user = userRepository
-                .findByUsername(username)
+        User user = userRepository.findByUsername(username)
                 .orElseThrow(() ->
-                        new RuntimeException(
-                                "User not found"
-                        )
-                );
+                        new RuntimeException("User not found"));
 
         Applicant applicant = new Applicant();
 
-        applicant.setFullName(
-                dto.getFullName()
-        );
-
-        applicant.setEmail(
-                dto.getEmail()
-        );
-
-        applicant.setPhone(
-                dto.getPhone()
-        );
-
-        applicant.setCountry(
-                dto.getCountry()
-        );
-
-        applicant.setExperience(
-                dto.getExperience()
-        );
-
-        applicant.setSkills(
-                dto.getSkills()
-        );
-
-        applicant.setPassportNumber(
-                dto.getPassportNumber()
-        );
-
+        applicant.setFullName(dto.getFullName());
+        applicant.setEmail(dto.getEmail());
+        applicant.setPhone(dto.getPhone());
+        applicant.setCountry(dto.getCountry());
+        applicant.setExperience(dto.getExperience());
+        applicant.setSkills(dto.getSkills());
+        applicant.setPassportNumber(dto.getPassportNumber());
         applicant.setUser(user);
 
         Applicant saved =
@@ -98,12 +75,9 @@ public class ApplicantService {
     // ==========================================
     // Upload CV
     // ==========================================
-
-    public FileUploadResponse uploadCV(
-            MultipartFile file) {
+    public FileUploadResponse uploadCV(MultipartFile file) {
 
         if (file == null || file.isEmpty()) {
-
             throw new RuntimeException(
                     "Please select a CV file."
             );
@@ -160,12 +134,9 @@ public class ApplicantService {
     // ==========================================
     // Upload Profile Image
     // ==========================================
-
-    public String uploadProfileImage(
-            MultipartFile file) {
+    public String uploadProfileImage(MultipartFile file) {
 
         if (file == null || file.isEmpty()) {
-
             throw new RuntimeException(
                     "Please select an image."
             );
@@ -210,7 +181,6 @@ public class ApplicantService {
     // ==========================================
     // Applicant View Own CV
     // ==========================================
-
     public String getMyCV() {
 
         String username =
@@ -242,12 +212,10 @@ public class ApplicantService {
     // ==========================================
     // View CV By Applicant ID
     // ==========================================
-
     public String downloadCV(Long applicantId) {
 
         Applicant applicant =
-                applicantRepository
-                        .findById(applicantId)
+                applicantRepository.findById(applicantId)
                         .orElseThrow(() ->
                                 new RuntimeException(
                                         "Applicant not found"
@@ -268,7 +236,6 @@ public class ApplicantService {
     // ==========================================
     // Get My Profile
     // ==========================================
-
     public ApplicantDTO getMyProfile() {
 
         String username =
@@ -292,7 +259,6 @@ public class ApplicantService {
     // ==========================================
     // Update My Profile
     // ==========================================
-
     public ApplicantDTO updateMyProfile(
             ApplicantDTO dto) {
 
@@ -311,10 +277,7 @@ public class ApplicantService {
                                 )
                         );
 
-        updateFields(
-                applicant,
-                dto
-        );
+        updateFields(applicant, dto);
 
         Applicant saved =
                 applicantRepository.save(applicant);
@@ -325,11 +288,9 @@ public class ApplicantService {
     // ==========================================
     // Get All Applicants
     // ==========================================
-
     public List<ApplicantDTO> getAllApplicants() {
 
-        return applicantRepository
-                .findAll()
+        return applicantRepository.findAll()
                 .stream()
                 .map(this::convertToDTO)
                 .toList();
@@ -338,13 +299,10 @@ public class ApplicantService {
     // ==========================================
     // Get Applicant By ID
     // ==========================================
-
-    public ApplicantDTO getApplicantById(
-            Long id) {
+    public ApplicantDTO getApplicantById(Long id) {
 
         Applicant applicant =
-                applicantRepository
-                        .findById(id)
+                applicantRepository.findById(id)
                         .orElseThrow(() ->
                                 new RuntimeException(
                                         "Applicant not found"
@@ -357,24 +315,19 @@ public class ApplicantService {
     // ==========================================
     // Update Applicant (Admin)
     // ==========================================
-
     public ApplicantDTO updateApplicant(
             Long id,
             ApplicantDTO dto) {
 
         Applicant applicant =
-                applicantRepository
-                        .findById(id)
+                applicantRepository.findById(id)
                         .orElseThrow(() ->
                                 new RuntimeException(
                                         "Applicant not found"
                                 )
                         );
 
-        updateFields(
-                applicant,
-                dto
-        );
+        updateFields(applicant, dto);
 
         Applicant saved =
                 applicantRepository.save(applicant);
@@ -383,32 +336,13 @@ public class ApplicantService {
     }
 
     // ==========================================
-    // DELETE APPLICANT
-    //
-    // Deletes:
-    //
-    // 1. Applicant's job applications
-    // 2. Applicant profile
-    // 3. Applicant User/login account
-    //
-    // After deletion:
-    //
-    // - Applicant disappears from admin
-    // - Username becomes available again
-    // - Email becomes available again
-    // - Applicant can register again
+    // DELETE APPLICANT - COMPLETE ACCOUNT DELETION
     // ==========================================
-
     @Transactional
     public void deleteApplicant(Long id) {
 
-        // -----------------------------------------------------
-        // Find applicant
-        // -----------------------------------------------------
-
         Applicant applicant =
-                applicantRepository
-                        .findById(id)
+                applicantRepository.findById(id)
                         .orElseThrow(() ->
                                 new RuntimeException(
                                         "Applicant not found"
@@ -416,29 +350,39 @@ public class ApplicantService {
                         );
 
         // -----------------------------------------------------
-        // Save associated User before deleting Applicant
+        // Get linked User before deleting Applicant
         // -----------------------------------------------------
 
         User user = applicant.getUser();
 
         // -----------------------------------------------------
-        // Delete Applicant
+        // Delete all job applications first
         //
-        // Applicant has:
-        //
-        // cascade = CascadeType.ALL
-        // orphanRemoval = true
-        //
-        // on the applications relationship.
-        //
-        // Therefore the applicant's job applications are
-        // deleted together with the applicant.
+        // This prevents foreign-key constraint problems and
+        // completely removes the applicant's applications.
+        // -----------------------------------------------------
+
+        List<JobApplication> applications =
+                applicant.getApplications();
+
+        if (applications != null &&
+                !applications.isEmpty()) {
+
+            jobApplicationRepository.deleteAll(
+                    applications
+            );
+        }
+
+        // -----------------------------------------------------
+        // Delete Applicant profile
         // -----------------------------------------------------
 
         applicantRepository.delete(applicant);
 
         // -----------------------------------------------------
-        // Delete User/login account
+        // Delete linked User account
+        //
+        // This allows the username to be reused.
         // -----------------------------------------------------
 
         if (user != null) {
@@ -450,7 +394,6 @@ public class ApplicantService {
     // ==========================================
     // Update Common Fields
     // ==========================================
-
     private void updateFields(
             Applicant applicant,
             ApplicantDTO dto) {
@@ -484,28 +427,24 @@ public class ApplicantService {
         );
 
         if (dto.getCvFileName() != null) {
-
             applicant.setCvFileName(
                     dto.getCvFileName()
             );
         }
 
         if (dto.getCvUrl() != null) {
-
             applicant.setCvUrl(
                     dto.getCvUrl()
             );
         }
 
         if (dto.getCvUploadedAt() != null) {
-
             applicant.setCvUploadedAt(
                     dto.getCvUploadedAt()
             );
         }
 
         if (dto.getProfileImage() != null) {
-
             applicant.setProfileImage(
                     dto.getProfileImage()
             );
@@ -515,16 +454,12 @@ public class ApplicantService {
     // ==========================================
     // Convert Entity -> DTO
     // ==========================================
-
     private ApplicantDTO convertToDTO(
             Applicant applicant) {
 
-        ApplicantDTO dto =
-                new ApplicantDTO();
+        ApplicantDTO dto = new ApplicantDTO();
 
-        dto.setId(
-                applicant.getId()
-        );
+        dto.setId(applicant.getId());
 
         dto.setFullName(
                 applicant.getFullName()

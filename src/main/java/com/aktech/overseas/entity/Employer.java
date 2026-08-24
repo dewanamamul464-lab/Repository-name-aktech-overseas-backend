@@ -1,7 +1,9 @@
 package com.aktech.overseas.entity;
 
 import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "employers")
@@ -15,8 +17,15 @@ public class Employer {
     // USER ACCOUNT
     // =========================================================
 
-    @OneToOne
-    @JoinColumn(name = "user_id", nullable = false, unique = true)
+    @OneToOne(
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    @JoinColumn(
+            name = "user_id",
+            nullable = false,
+            unique = true
+    )
     private User user;
 
     // =========================================================
@@ -50,7 +59,8 @@ public class Employer {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private EmployerStatus status = EmployerStatus.PENDING;
+    private EmployerStatus status =
+            EmployerStatus.PENDING;
 
     // =========================================================
     // DATE
@@ -60,12 +70,27 @@ public class Employer {
     private LocalDateTime createdAt;
 
     // =========================================================
-    // CONSTRUCTORS
+    // JOBS
+    // =========================================================
+
+    @OneToMany(
+            mappedBy = "employer",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<Job> jobs;
+
+    // =========================================================
+    // CONSTRUCTOR
     // =========================================================
 
     public Employer() {
-        this.createdAt = LocalDateTime.now();
-        this.status = EmployerStatus.PENDING;
+
+        this.createdAt =
+                LocalDateTime.now();
+
+        this.status =
+                EmployerStatus.PENDING;
     }
 
     // =========================================================
@@ -92,7 +117,9 @@ public class Employer {
         return companyName;
     }
 
-    public void setCompanyName(String companyName) {
+    public void setCompanyName(
+            String companyName) {
+
         this.companyName = companyName;
     }
 
@@ -100,7 +127,9 @@ public class Employer {
         return contactPerson;
     }
 
-    public void setContactPerson(String contactPerson) {
+    public void setContactPerson(
+            String contactPerson) {
+
         this.contactPerson = contactPerson;
     }
 
@@ -109,6 +138,7 @@ public class Employer {
     }
 
     public void setEmail(String email) {
+
         this.email = email;
     }
 
@@ -117,6 +147,7 @@ public class Employer {
     }
 
     public void setPhone(String phone) {
+
         this.phone = phone;
     }
 
@@ -125,6 +156,7 @@ public class Employer {
     }
 
     public void setCountry(String country) {
+
         this.country = country;
     }
 
@@ -133,6 +165,7 @@ public class Employer {
     }
 
     public void setAddress(String address) {
+
         this.address = address;
     }
 
@@ -140,15 +173,20 @@ public class Employer {
         return registrationNumber;
     }
 
-    public void setRegistrationNumber(String registrationNumber) {
-        this.registrationNumber = registrationNumber;
+    public void setRegistrationNumber(
+            String registrationNumber) {
+
+        this.registrationNumber =
+                registrationNumber;
     }
 
     public String getDescription() {
         return description;
     }
 
-    public void setDescription(String description) {
+    public void setDescription(
+            String description) {
+
         this.description = description;
     }
 
@@ -156,7 +194,9 @@ public class Employer {
         return status;
     }
 
-    public void setStatus(EmployerStatus status) {
+    public void setStatus(
+            EmployerStatus status) {
+
         this.status = status;
     }
 
@@ -164,7 +204,17 @@ public class Employer {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
+    public void setCreatedAt(
+            LocalDateTime createdAt) {
+
         this.createdAt = createdAt;
+    }
+
+    public List<Job> getJobs() {
+        return jobs;
+    }
+
+    public void setJobs(List<Job> jobs) {
+        this.jobs = jobs;
     }
 }

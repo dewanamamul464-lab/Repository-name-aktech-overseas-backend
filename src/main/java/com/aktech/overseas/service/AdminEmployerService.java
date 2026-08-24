@@ -16,19 +16,19 @@ import java.util.List;
 public class AdminEmployerService {
 
     private final EmployerRepository employerRepository;
-    private final UserRepository userRepository;
     private final JobRepository jobRepository;
+    private final UserRepository userRepository;
     private final EmailService emailService;
 
     public AdminEmployerService(
             EmployerRepository employerRepository,
-            UserRepository userRepository,
             JobRepository jobRepository,
+            UserRepository userRepository,
             EmailService emailService) {
 
         this.employerRepository = employerRepository;
-        this.userRepository = userRepository;
         this.jobRepository = jobRepository;
+        this.userRepository = userRepository;
         this.emailService = emailService;
     }
 
@@ -79,10 +79,6 @@ public class AdminEmployerService {
                         )
                 );
 
-        // -----------------------------------------------------
-        // Already approved
-        // -----------------------------------------------------
-
         if (employer.getStatus()
                 == EmployerStatus.APPROVED) {
 
@@ -91,20 +87,12 @@ public class AdminEmployerService {
             );
         }
 
-        // -----------------------------------------------------
-        // Set approved
-        // -----------------------------------------------------
-
         employer.setStatus(
                 EmployerStatus.APPROVED
         );
 
         Employer savedEmployer =
                 employerRepository.save(employer);
-
-        // -----------------------------------------------------
-        // Send approval email
-        // -----------------------------------------------------
 
         emailService.sendEmployerApprovalEmail(
                 employer.getEmail(),
@@ -128,10 +116,6 @@ public class AdminEmployerService {
                         )
                 );
 
-        // -----------------------------------------------------
-        // Already rejected
-        // -----------------------------------------------------
-
         if (employer.getStatus()
                 == EmployerStatus.REJECTED) {
 
@@ -140,20 +124,12 @@ public class AdminEmployerService {
             );
         }
 
-        // -----------------------------------------------------
-        // Set rejected
-        // -----------------------------------------------------
-
         employer.setStatus(
                 EmployerStatus.REJECTED
         );
 
         Employer savedEmployer =
                 employerRepository.save(employer);
-
-        // -----------------------------------------------------
-        // Send rejection email
-        // -----------------------------------------------------
 
         emailService.sendEmployerRejectionEmail(
                 employer.getEmail(),
@@ -165,29 +141,11 @@ public class AdminEmployerService {
     }
 
     // =========================================================
-    // DELETE EMPLOYER
-    //
-    // Deletes the COMPLETE employer account:
-    //
-    // 1. Employer's job applications
-    // 2. Employer's jobs
-    // 3. Employer profile
-    // 4. Employer User/login account
-    //
-    // After deletion:
-    //
-    // - Employer disappears from admin
-    // - Username becomes available again
-    // - Email becomes available again
-    // - Employer can register again
+    // DELETE EMPLOYER - COMPLETE ACCOUNT DELETION
     // =========================================================
 
     @Transactional
     public void deleteEmployer(Long id) {
-
-        // -----------------------------------------------------
-        // Find employer
-        // -----------------------------------------------------
 
         Employer employer = employerRepository.findById(id)
                 .orElseThrow(() ->
@@ -197,48 +155,42 @@ public class AdminEmployerService {
                 );
 
         // -----------------------------------------------------
-        // Save associated User before deleting Employer
+        // Get linked User before deleting Employer
         // -----------------------------------------------------
 
         User user = employer.getUser();
 
         // -----------------------------------------------------
-        // Find all jobs belonging to this employer
+        // Delete all jobs belonging to this employer
+        //
+        // Job has:
+        // @OneToMany(cascade = CascadeType.ALL,
+        //            orphanRemoval = true)
+        // for JobApplication.
+        //
+        // Therefore deleting the jobs also removes their
+        // applications.
         // -----------------------------------------------------
 
         List<Job> jobs =
                 jobRepository.findByEmployerId(id);
 
-        // -----------------------------------------------------
-        // Delete employer's jobs
-        //
-        // Job has:
-        //
-        // @OneToMany(
-        //     mappedBy = "job",
-        //     cascade = CascadeType.ALL,
-        //     orphanRemoval = true
-        // )
-        //
-        // Therefore the applications belonging to these jobs
-        // are deleted together with the jobs.
-        // -----------------------------------------------------
-
-        if (!jobs.isEmpty()) {
+        if (jobs != null && !jobs.isEmpty()) {
 
             jobRepository.deleteAll(jobs);
         }
 
         // -----------------------------------------------------
-        // Delete employer profile
+        // Delete Employer profile
         // -----------------------------------------------------
 
         employerRepository.delete(employer);
 
         // -----------------------------------------------------
-        // Delete User/login account
+        // Delete linked User account
         //
-        // This is required so the old username can be reused.
+        // This is the important part that was missing before.
+        // Without this, the old username remains in users.
         // -----------------------------------------------------
 
         if (user != null) {

@@ -29,9 +29,10 @@ public class Applicant {
     @Column(unique = true)
     private String passportNumber;
 
-    // ===========================
-    // CV Information (Cloudinary)
-    // ===========================
+    // =========================================================
+    // CV INFORMATION
+    // =========================================================
+
     private String cvFileName;
 
     @Column(length = 1000)
@@ -39,18 +40,31 @@ public class Applicant {
 
     private LocalDateTime cvUploadedAt;
 
-    // ===========================
-// Profile Picture
-// ===========================
+    // =========================================================
+    // PROFILE IMAGE
+    // =========================================================
+
     @Column(length = 1000)
     private String profileImage;
 
-    // One User has One Applicant Profile
-    @OneToOne
-    @JoinColumn(name = "user_id", unique = true)
+    // =========================================================
+    // USER ACCOUNT
+    // =========================================================
+
+    @OneToOne(
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    @JoinColumn(
+            name = "user_id",
+            unique = true
+    )
     private User user;
 
-    // One Applicant can have many Job Applications
+    // =========================================================
+    // JOB APPLICATIONS
+    // =========================================================
+
     @OneToMany(
             mappedBy = "applicant",
             cascade = CascadeType.ALL,
@@ -58,8 +72,16 @@ public class Applicant {
     )
     private List<JobApplication> applications;
 
+    // =========================================================
+    // CONSTRUCTOR
+    // =========================================================
+
     public Applicant() {
     }
+
+    // =========================================================
+    // GETTERS & SETTERS
+    // =========================================================
 
     public Long getId() {
         return id;
@@ -73,14 +95,19 @@ public class Applicant {
         return profileImage;
     }
 
-    public void setProfileImage(String profileImage) {
+    public void setProfileImage(
+            String profileImage) {
+
         this.profileImage = profileImage;
     }
+
     public String getFullName() {
         return fullName;
     }
 
-    public void setFullName(String fullName) {
+    public void setFullName(
+            String fullName) {
+
         this.fullName = fullName;
     }
 
@@ -88,7 +115,9 @@ public class Applicant {
         return email;
     }
 
-    public void setEmail(String email) {
+    public void setEmail(
+            String email) {
+
         this.email = email;
     }
 
@@ -96,7 +125,9 @@ public class Applicant {
         return phone;
     }
 
-    public void setPhone(String phone) {
+    public void setPhone(
+            String phone) {
+
         this.phone = phone;
     }
 
@@ -104,7 +135,9 @@ public class Applicant {
         return country;
     }
 
-    public void setCountry(String country) {
+    public void setCountry(
+            String country) {
+
         this.country = country;
     }
 
@@ -112,7 +145,9 @@ public class Applicant {
         return experience;
     }
 
-    public void setExperience(String experience) {
+    public void setExperience(
+            String experience) {
+
         this.experience = experience;
     }
 
@@ -120,7 +155,9 @@ public class Applicant {
         return skills;
     }
 
-    public void setSkills(String skills) {
+    public void setSkills(
+            String skills) {
+
         this.skills = skills;
     }
 
@@ -128,15 +165,20 @@ public class Applicant {
         return passportNumber;
     }
 
-    public void setPassportNumber(String passportNumber) {
-        this.passportNumber = passportNumber;
+    public void setPassportNumber(
+            String passportNumber) {
+
+        this.passportNumber =
+                passportNumber;
     }
 
     public String getCvFileName() {
         return cvFileName;
     }
 
-    public void setCvFileName(String cvFileName) {
+    public void setCvFileName(
+            String cvFileName) {
+
         this.cvFileName = cvFileName;
     }
 
@@ -144,7 +186,9 @@ public class Applicant {
         return cvUrl;
     }
 
-    public void setCvUrl(String cvUrl) {
+    public void setCvUrl(
+            String cvUrl) {
+
         this.cvUrl = cvUrl;
     }
 
@@ -152,8 +196,11 @@ public class Applicant {
         return cvUploadedAt;
     }
 
-    public void setCvUploadedAt(LocalDateTime cvUploadedAt) {
-        this.cvUploadedAt = cvUploadedAt;
+    public void setCvUploadedAt(
+            LocalDateTime cvUploadedAt) {
+
+        this.cvUploadedAt =
+                cvUploadedAt;
     }
 
     public User getUser() {
@@ -168,7 +215,9 @@ public class Applicant {
         return applications;
     }
 
-    public void setApplications(List<JobApplication> applications) {
+    public void setApplications(
+            List<JobApplication> applications) {
+
         this.applications = applications;
     }
 }

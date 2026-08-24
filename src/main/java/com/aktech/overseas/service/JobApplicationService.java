@@ -3,13 +3,13 @@ package com.aktech.overseas.service;
 import com.aktech.overseas.dto.ApplicationDTO;
 import com.aktech.overseas.entity.ApplicationStatus;
 import com.aktech.overseas.entity.Applicant;
-import com.aktech.overseas.entity.Employer;
 import com.aktech.overseas.entity.Job;
 import com.aktech.overseas.entity.JobApplication;
 import com.aktech.overseas.repository.ApplicantRepository;
-import com.aktech.overseas.repository.EmployerRepository;
 import com.aktech.overseas.repository.JobApplicationRepository;
 import com.aktech.overseas.repository.JobRepository;
+import com.aktech.overseas.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -23,48 +23,65 @@ public class JobApplicationService {
     private final JobApplicationRepository jobApplicationRepository;
     private final ApplicantRepository applicantRepository;
     private final JobRepository jobRepository;
-    private final EmployerRepository employerRepository;
-    private final EmailService emailService;
+    private final UserRepository userRepository;
 
     public JobApplicationService(
             JobApplicationRepository jobApplicationRepository,
             ApplicantRepository applicantRepository,
             JobRepository jobRepository,
-            EmployerRepository employerRepository,
-            EmailService emailService) {
+            UserRepository userRepository) {
 
         this.jobApplicationRepository = jobApplicationRepository;
         this.applicantRepository = applicantRepository;
         this.jobRepository = jobRepository;
-        this.employerRepository = employerRepository;
-        this.emailService = emailService;
+        this.userRepository = userRepository;
     }
 
     // =========================================================
     // APPLY FOR JOB
     // =========================================================
 
+    @Transactional
     public ApplicationDTO apply(ApplicationDTO dto) {
 
-        if (dto.getJobId() == null) {
-            throw new RuntimeException("Job ID is required.");
+        if (dto == null) {
+            throw new RuntimeException("Application data is required");
         }
 
-        // Get currently logged-in username
+        if (dto.getJobId() == null) {
+            throw new RuntimeException("Job ID is required");
+        }
+
+        // -----------------------------------------------------
+        // GET CURRENT LOGGED-IN USER
+        // -----------------------------------------------------
+
         String username = getCurrentUsername();
 
-        // Find applicant using logged-in user
         Applicant applicant = applicantRepository
                 .findByUserUsername(username)
                 .orElseThrow(() ->
-                        new RuntimeException("Applicant profile not found."));
+                        new RuntimeException(
+                                "Applicant profile not found"
+                        )
+                );
 
-        // Find job
-        Job job = jobRepository.findById(dto.getJobId())
+        // -----------------------------------------------------
+        // FIND JOB
+        // -----------------------------------------------------
+
+        Job job = jobRepository
+                .findById(dto.getJobId())
                 .orElseThrow(() ->
-                        new RuntimeException("Job not found."));
+                        new RuntimeException(
+                                "Job not found"
+                        )
+                );
 
-        // Prevent duplicate application
+        // -----------------------------------------------------
+        // PREVENT DUPLICATE APPLICATION
+        // -----------------------------------------------------
+
         if (jobApplicationRepository
                 .findByApplicantIdAndJobId(
                         applicant.getId(),
@@ -73,32 +90,29 @@ public class JobApplicationService {
                 .isPresent()) {
 
             throw new RuntimeException(
-                    "You have already applied for this job."
+                    "You have already applied for this job"
             );
         }
 
-        // Create application
+        // -----------------------------------------------------
+        // CREATE APPLICATION
+        // -----------------------------------------------------
+
         JobApplication application = new JobApplication();
 
         application.setApplicant(applicant);
         application.setJob(job);
+
+        // New applications start as PENDING
         application.setStatus(ApplicationStatus.PENDING);
 
         application = jobApplicationRepository.save(application);
-
-        // Send email notification
-        emailService.sendApplicationSubmittedEmail(
-                applicant.getEmail(),
-                applicant.getFullName(),
-                job.getCompany(),
-                job.getPosition()
-        );
 
         return convertToDTO(application);
     }
 
     // =========================================================
-    // APPLICANT: VIEW OWN APPLICATIONS
+    // GET MY APPLICATIONS
     // =========================================================
 
     public List<ApplicationDTO> getMyApplications() {
@@ -108,7 +122,10 @@ public class JobApplicationService {
         Applicant applicant = applicantRepository
                 .findByUserUsername(username)
                 .orElseThrow(() ->
-                        new RuntimeException("Applicant profile not found."));
+                        new RuntimeException(
+                                "Applicant profile not found"
+                        )
+                );
 
         return jobApplicationRepository
                 .findByApplicantId(applicant.getId())
@@ -118,7 +135,7 @@ public class JobApplicationService {
     }
 
     // =========================================================
-    // EMPLOYER / ADMIN: VIEW ALL APPLICATIONS
+    // GET ALL APPLICATIONS
     // =========================================================
 
     public List<ApplicationDTO> getAllApplications() {
@@ -131,176 +148,196 @@ public class JobApplicationService {
     }
 
     // =========================================================
-    // EMPLOYER / ADMIN: VIEW APPLICATION BY ID
+    // GET APPLICATION BY ID
     // =========================================================
 
     public ApplicationDTO getApplicationById(Long id) {
 
-        JobApplication application = jobApplicationRepository
-                .findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Application not found."));
+        if (id == null) {
+            throw new RuntimeException(
+                    "Application ID is required"
+            );
+        }
+
+        JobApplication application =
+                jobApplicationRepository
+                        .findById(id)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Application not found"
+                                )
+                        );
 
         return convertToDTO(application);
     }
 
     // =========================================================
-    // EMPLOYER / ADMIN: APPROVE APPLICATION
+    // APPROVE APPLICATION
     // =========================================================
 
+    @Transactional
     public ApplicationDTO approveApplication(Long id) {
 
-        JobApplication application = jobApplicationRepository
-                .findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Application not found."));
+        JobApplication application =
+                jobApplicationRepository
+                        .findById(id)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Application not found"
+                                )
+                        );
 
-        // Check whether current user is allowed to approve
-        validateEmployerAccess(application);
+        application.setStatus(
+                ApplicationStatus.APPROVED
+        );
 
-        application.setStatus(ApplicationStatus.APPROVED);
-
-        application = jobApplicationRepository.save(application);
-
-        // Send status email
-        sendStatusEmail(application);
+        application =
+                jobApplicationRepository.save(application);
 
         return convertToDTO(application);
     }
 
     // =========================================================
-    // EMPLOYER / ADMIN: REJECT APPLICATION
+    // REJECT APPLICATION
     // =========================================================
 
+    @Transactional
     public ApplicationDTO rejectApplication(Long id) {
 
-        JobApplication application = jobApplicationRepository
-                .findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Application not found."));
+        JobApplication application =
+                jobApplicationRepository
+                        .findById(id)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Application not found"
+                                )
+                        );
 
-        // Check whether current user is allowed to reject
-        validateEmployerAccess(application);
+        application.setStatus(
+                ApplicationStatus.REJECTED
+        );
 
-        application.setStatus(ApplicationStatus.REJECTED);
-
-        application = jobApplicationRepository.save(application);
-
-        // Send status email
-        sendStatusEmail(application);
+        application =
+                jobApplicationRepository.save(application);
 
         return convertToDTO(application);
     }
 
     // =========================================================
-    // ADMIN: DELETE APPLICATION
+    // DELETE APPLICATION
     // =========================================================
 
+    @Transactional
     public void deleteApplication(Long id) {
 
-        JobApplication application = jobApplicationRepository
-                .findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Application not found."));
+        JobApplication application =
+                jobApplicationRepository
+                        .findById(id)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Application not found"
+                                )
+                        );
 
         jobApplicationRepository.delete(application);
     }
 
     // =========================================================
-    // VALIDATE EMPLOYER ACCESS
+    // GET APPLICATIONS BY JOB
     // =========================================================
 
-    private void validateEmployerAccess(JobApplication application) {
+    public List<ApplicationDTO> getApplicationsByJob(
+            Long jobId) {
 
-        Authentication authentication =
-                SecurityContextHolder
-                        .getContext()
-                        .getAuthentication();
-
-        if (authentication == null ||
-                !authentication.isAuthenticated()) {
-
-            throw new RuntimeException("User is not authenticated.");
-        }
-
-        // ADMIN can approve/reject any application
-        boolean isAdmin = authentication.getAuthorities()
+        return jobApplicationRepository
+                .findByJobId(jobId)
                 .stream()
-                .anyMatch(authority ->
-                        authority.getAuthority().equals("ROLE_ADMIN"));
-
-        if (isAdmin) {
-            return;
-        }
-
-        // Get currently logged-in employer
-        String username = authentication.getName();
-
-        Employer employer = employerRepository
-                .findByUserUsername(username)
-                .orElseThrow(() ->
-                        new RuntimeException("Employer profile not found."));
-
-        // Get the job associated with this application
-        Job job = application.getJob();
-
-        if (job == null) {
-            throw new RuntimeException(
-                    "Application is not associated with a job."
-            );
-        }
-
-        // Check whether this employer owns the job
-        Employer jobEmployer = job.getEmployer();
-
-        if (jobEmployer == null ||
-                !jobEmployer.getId().equals(employer.getId())) {
-
-            throw new RuntimeException(
-                    "You are not authorized to manage this application."
-            );
-        }
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
     // =========================================================
-    // SEND APPLICATION STATUS EMAIL
+    // DELETE APPLICATIONS BY APPLICANT
     // =========================================================
 
-    private void sendStatusEmail(JobApplication application) {
+    @Transactional
+    public void deleteApplicationsByApplicant(
+            Long applicantId) {
 
-        Applicant applicant = application.getApplicant();
-        Job job = application.getJob();
+        jobApplicationRepository
+                .deleteByApplicantId(applicantId);
+    }
 
-        emailService.sendApplicationStatusEmail(
-                applicant.getEmail(),
-                applicant.getFullName(),
-                job.getPosition(),
-                application.getStatus().name()
-        );
+    // =========================================================
+    // DELETE APPLICATIONS BY JOB
+    // =========================================================
+
+    @Transactional
+    public void deleteApplicationsByJob(
+            Long jobId) {
+
+        jobApplicationRepository
+                .deleteByJobId(jobId);
     }
 
     // =========================================================
     // CONVERT ENTITY -> DTO
     // =========================================================
 
-    private ApplicationDTO convertToDTO(JobApplication application) {
+    private ApplicationDTO convertToDTO(
+            JobApplication application) {
 
-        Applicant applicant = application.getApplicant();
-        Job job = application.getJob();
+        ApplicationDTO dto = new ApplicationDTO();
 
-        return new ApplicationDTO(
-                application.getId(),
-                applicant.getId(),
-                applicant.getFullName(),
-                job.getId(),
-                job.getCompany(),
-                job.getPosition(),
+        dto.setId(application.getId());
+
+        // -----------------------------------------------------
+        // APPLICANT
+        // -----------------------------------------------------
+
+        if (application.getApplicant() != null) {
+
+            dto.setApplicantId(
+                    application.getApplicant().getId()
+            );
+
+            dto.setApplicantName(
+                    application.getApplicant().getFullName()
+            );
+        }
+
+        // -----------------------------------------------------
+        // JOB
+        // -----------------------------------------------------
+
+        if (application.getJob() != null) {
+
+            dto.setJobId(
+                    application.getJob().getId()
+            );
+
+            dto.setCompany(
+                    application.getJob().getCompany()
+            );
+
+            dto.setPosition(
+                    application.getJob().getPosition()
+            );
+        }
+
+        // -----------------------------------------------------
+        // STATUS
+        // -----------------------------------------------------
+
+        dto.setStatus(
                 application.getStatus()
         );
+
+        return dto;
     }
 
     // =========================================================
-    // GET CURRENT LOGGED-IN USERNAME
+    // GET CURRENT USERNAME FROM JWT / SECURITY CONTEXT
     // =========================================================
 
     private String getCurrentUsername() {
@@ -313,9 +350,22 @@ public class JobApplicationService {
         if (authentication == null ||
                 !authentication.isAuthenticated()) {
 
-            throw new RuntimeException("User is not authenticated.");
+            throw new RuntimeException(
+                    "User is not authenticated"
+            );
         }
 
-        return authentication.getName();
+        String username =
+                authentication.getName();
+
+        if (username == null ||
+                username.isBlank()) {
+
+            throw new RuntimeException(
+                    "Unable to identify logged-in user"
+            );
+        }
+
+        return username;
     }
 }
