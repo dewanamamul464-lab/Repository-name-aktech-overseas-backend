@@ -70,14 +70,25 @@ public class AdminEmployerService {
     // APPROVE EMPLOYER
     // =========================================================
 
+    @Transactional
     public Employer approveEmployer(Long id) {
 
-        Employer employer = employerRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException(
-                                "Employer not found with id: " + id
-                        )
-                );
+        // -----------------------------------------------------
+        // Find employer
+        // -----------------------------------------------------
+
+        Employer employer =
+                employerRepository.findById(id)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Employer not found with id: "
+                                                + id
+                                )
+                        );
+
+        // -----------------------------------------------------
+        // Check current status
+        // -----------------------------------------------------
 
         if (employer.getStatus()
                 == EmployerStatus.APPROVED) {
@@ -87,18 +98,56 @@ public class AdminEmployerService {
             );
         }
 
+        // -----------------------------------------------------
+        // Approve employer
+        // -----------------------------------------------------
+
         employer.setStatus(
                 EmployerStatus.APPROVED
         );
 
+        // -----------------------------------------------------
+        // Save approval to database
+        // -----------------------------------------------------
+
         Employer savedEmployer =
                 employerRepository.save(employer);
 
-        emailService.sendEmployerApprovalEmail(
-                employer.getEmail(),
-                employer.getContactPerson(),
-                employer.getCompanyName()
-        );
+        // -----------------------------------------------------
+        // Send approval email
+        //
+        // IMPORTANT:
+        // Email failure must NOT make the employer approval
+        // operation fail.
+        // -----------------------------------------------------
+
+        try {
+
+            emailService.sendEmployerApprovalEmail(
+                    savedEmployer.getEmail(),
+                    savedEmployer.getContactPerson(),
+                    savedEmployer.getCompanyName()
+            );
+
+            System.out.println(
+                    "Employer approval email sent successfully."
+            );
+
+        } catch (Exception e) {
+
+            System.out.println(
+                    "Employer approved successfully, "
+                            + "but approval email could not be sent."
+            );
+
+            System.out.println(
+                    "Email error: " + e.getMessage()
+            );
+        }
+
+        // -----------------------------------------------------
+        // Return approved employer
+        // -----------------------------------------------------
 
         return savedEmployer;
     }
@@ -107,14 +156,25 @@ public class AdminEmployerService {
     // REJECT EMPLOYER
     // =========================================================
 
+    @Transactional
     public Employer rejectEmployer(Long id) {
 
-        Employer employer = employerRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException(
-                                "Employer not found with id: " + id
-                        )
-                );
+        // -----------------------------------------------------
+        // Find employer
+        // -----------------------------------------------------
+
+        Employer employer =
+                employerRepository.findById(id)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Employer not found with id: "
+                                                + id
+                                )
+                        );
+
+        // -----------------------------------------------------
+        // Check current status
+        // -----------------------------------------------------
 
         if (employer.getStatus()
                 == EmployerStatus.REJECTED) {
@@ -124,18 +184,55 @@ public class AdminEmployerService {
             );
         }
 
+        // -----------------------------------------------------
+        // Reject employer
+        // -----------------------------------------------------
+
         employer.setStatus(
                 EmployerStatus.REJECTED
         );
 
+        // -----------------------------------------------------
+        // Save rejection
+        // -----------------------------------------------------
+
         Employer savedEmployer =
                 employerRepository.save(employer);
 
-        emailService.sendEmployerRejectionEmail(
-                employer.getEmail(),
-                employer.getContactPerson(),
-                employer.getCompanyName()
-        );
+        // -----------------------------------------------------
+        // Send rejection email
+        //
+        // Email failure must NOT make the rejection operation
+        // fail.
+        // -----------------------------------------------------
+
+        try {
+
+            emailService.sendEmployerRejectionEmail(
+                    savedEmployer.getEmail(),
+                    savedEmployer.getContactPerson(),
+                    savedEmployer.getCompanyName()
+            );
+
+            System.out.println(
+                    "Employer rejection email sent successfully."
+            );
+
+        } catch (Exception e) {
+
+            System.out.println(
+                    "Employer rejected successfully, "
+                            + "but rejection email could not be sent."
+            );
+
+            System.out.println(
+                    "Email error: " + e.getMessage()
+            );
+        }
+
+        // -----------------------------------------------------
+        // Return rejected employer
+        // -----------------------------------------------------
 
         return savedEmployer;
     }
@@ -147,12 +244,18 @@ public class AdminEmployerService {
     @Transactional
     public void deleteEmployer(Long id) {
 
-        Employer employer = employerRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException(
-                                "Employer not found with id: " + id
-                        )
-                );
+        // -----------------------------------------------------
+        // Find employer
+        // -----------------------------------------------------
+
+        Employer employer =
+                employerRepository.findById(id)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Employer not found with id: "
+                                                + id
+                                )
+                        );
 
         // -----------------------------------------------------
         // Get linked User before deleting Employer
@@ -164,16 +267,18 @@ public class AdminEmployerService {
         // Delete all jobs belonging to this employer
         //
         // Job has:
-        // @OneToMany(cascade = CascadeType.ALL,
-        //            orphanRemoval = true)
-        // for JobApplication.
+        //
+        // @OneToMany(
+        //     cascade = CascadeType.ALL,
+        //     orphanRemoval = true
+        // )
         //
         // Therefore deleting the jobs also removes their
         // applications.
         // -----------------------------------------------------
 
         List<Job> jobs =
-                jobRepository.findByEmployerId(id);
+                jobRepository.findByEmployer_Id(id);
 
         if (jobs != null && !jobs.isEmpty()) {
 
@@ -189,8 +294,7 @@ public class AdminEmployerService {
         // -----------------------------------------------------
         // Delete linked User account
         //
-        // This is the important part that was missing before.
-        // Without this, the old username remains in users.
+        // This removes the old username from users as well.
         // -----------------------------------------------------
 
         if (user != null) {

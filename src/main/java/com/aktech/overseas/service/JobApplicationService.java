@@ -1,15 +1,13 @@
 package com.aktech.overseas.service;
 
 import com.aktech.overseas.dto.ApplicationDTO;
-import com.aktech.overseas.entity.ApplicationStatus;
 import com.aktech.overseas.entity.Applicant;
+import com.aktech.overseas.entity.ApplicationStatus;
 import com.aktech.overseas.entity.Job;
 import com.aktech.overseas.entity.JobApplication;
 import com.aktech.overseas.repository.ApplicantRepository;
 import com.aktech.overseas.repository.JobApplicationRepository;
 import com.aktech.overseas.repository.JobRepository;
-import com.aktech.overseas.repository.UserRepository;
-import jakarta.transaction.Transactional;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -23,109 +21,126 @@ public class JobApplicationService {
     private final JobApplicationRepository jobApplicationRepository;
     private final ApplicantRepository applicantRepository;
     private final JobRepository jobRepository;
-    private final UserRepository userRepository;
 
     public JobApplicationService(
             JobApplicationRepository jobApplicationRepository,
             ApplicantRepository applicantRepository,
-            JobRepository jobRepository,
-            UserRepository userRepository) {
+            JobRepository jobRepository) {
 
         this.jobApplicationRepository = jobApplicationRepository;
         this.applicantRepository = applicantRepository;
         this.jobRepository = jobRepository;
-        this.userRepository = userRepository;
     }
 
     // =========================================================
     // APPLY FOR JOB
     // =========================================================
 
-    @Transactional
     public ApplicationDTO apply(ApplicationDTO dto) {
 
         if (dto == null) {
-            throw new RuntimeException("Application data is required");
-        }
-
-        if (dto.getJobId() == null) {
-            throw new RuntimeException("Job ID is required");
-        }
-
-        // -----------------------------------------------------
-        // GET CURRENT LOGGED-IN USER
-        // -----------------------------------------------------
-
-        String username = getCurrentUsername();
-
-        Applicant applicant = applicantRepository
-                .findByUserUsername(username)
-                .orElseThrow(() ->
-                        new RuntimeException(
-                                "Applicant profile not found"
-                        )
-                );
-
-        // -----------------------------------------------------
-        // FIND JOB
-        // -----------------------------------------------------
-
-        Job job = jobRepository
-                .findById(dto.getJobId())
-                .orElseThrow(() ->
-                        new RuntimeException(
-                                "Job not found"
-                        )
-                );
-
-        // -----------------------------------------------------
-        // PREVENT DUPLICATE APPLICATION
-        // -----------------------------------------------------
-
-        if (jobApplicationRepository
-                .findByApplicantIdAndJobId(
-                        applicant.getId(),
-                        job.getId()
-                )
-                .isPresent()) {
-
             throw new RuntimeException(
-                    "You have already applied for this job"
+                    "Application data is required."
             );
         }
 
-        // -----------------------------------------------------
-        // CREATE APPLICATION
-        // -----------------------------------------------------
+        if (dto.getJobId() == null) {
+            throw new RuntimeException(
+                    "Job ID is required."
+            );
+        }
 
-        JobApplication application = new JobApplication();
+        Authentication authentication =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
+
+        if (authentication == null
+                || !authentication.isAuthenticated()) {
+
+            throw new RuntimeException(
+                    "User is not authenticated."
+            );
+        }
+
+        String email = authentication.getName();
+
+        Applicant applicant =
+                applicantRepository
+                        .findByEmail(email)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Applicant not found."
+                                )
+                        );
+
+        Job job =
+                jobRepository
+                        .findById(dto.getJobId())
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Job not found with id: "
+                                                + dto.getJobId()
+                                )
+                        );
+
+        // Prevent duplicate application
+        if (jobApplicationRepository
+                .existsByApplicantIdAndJobId(
+                        applicant.getId(),
+                        job.getId())) {
+
+            throw new RuntimeException(
+                    "You have already applied for this job."
+            );
+        }
+
+        JobApplication application =
+                new JobApplication();
 
         application.setApplicant(applicant);
         application.setJob(job);
 
-        // New applications start as PENDING
-        application.setStatus(ApplicationStatus.PENDING);
+        // ApplicationStatus is an enum
+        application.setStatus(
+                ApplicationStatus.PENDING
+        );
 
-        application = jobApplicationRepository.save(application);
+        JobApplication saved =
+                jobApplicationRepository.save(application);
 
-        return convertToDTO(application);
+        return convertToDTO(saved);
     }
 
     // =========================================================
-    // GET MY APPLICATIONS
+    // GET CURRENT APPLICANT APPLICATIONS
     // =========================================================
 
     public List<ApplicationDTO> getMyApplications() {
 
-        String username = getCurrentUsername();
+        Authentication authentication =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
 
-        Applicant applicant = applicantRepository
-                .findByUserUsername(username)
-                .orElseThrow(() ->
-                        new RuntimeException(
-                                "Applicant profile not found"
-                        )
-                );
+        if (authentication == null
+                || !authentication.isAuthenticated()) {
+
+            throw new RuntimeException(
+                    "User is not authenticated."
+            );
+        }
+
+        String email = authentication.getName();
+
+        Applicant applicant =
+                applicantRepository
+                        .findByEmail(email)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Applicant not found."
+                                )
+                        );
 
         return jobApplicationRepository
                 .findByApplicantId(applicant.getId())
@@ -153,18 +168,13 @@ public class JobApplicationService {
 
     public ApplicationDTO getApplicationById(Long id) {
 
-        if (id == null) {
-            throw new RuntimeException(
-                    "Application ID is required"
-            );
-        }
-
         JobApplication application =
                 jobApplicationRepository
                         .findById(id)
                         .orElseThrow(() ->
                                 new RuntimeException(
-                                        "Application not found"
+                                        "Application not found with id: "
+                                                + id
                                 )
                         );
 
@@ -175,7 +185,6 @@ public class JobApplicationService {
     // APPROVE APPLICATION
     // =========================================================
 
-    @Transactional
     public ApplicationDTO approveApplication(Long id) {
 
         JobApplication application =
@@ -183,7 +192,8 @@ public class JobApplicationService {
                         .findById(id)
                         .orElseThrow(() ->
                                 new RuntimeException(
-                                        "Application not found"
+                                        "Application not found with id: "
+                                                + id
                                 )
                         );
 
@@ -191,17 +201,16 @@ public class JobApplicationService {
                 ApplicationStatus.APPROVED
         );
 
-        application =
+        JobApplication updated =
                 jobApplicationRepository.save(application);
 
-        return convertToDTO(application);
+        return convertToDTO(updated);
     }
 
     // =========================================================
     // REJECT APPLICATION
     // =========================================================
 
-    @Transactional
     public ApplicationDTO rejectApplication(Long id) {
 
         JobApplication application =
@@ -209,7 +218,8 @@ public class JobApplicationService {
                         .findById(id)
                         .orElseThrow(() ->
                                 new RuntimeException(
-                                        "Application not found"
+                                        "Application not found with id: "
+                                                + id
                                 )
                         );
 
@@ -217,155 +227,81 @@ public class JobApplicationService {
                 ApplicationStatus.REJECTED
         );
 
-        application =
+        JobApplication updated =
                 jobApplicationRepository.save(application);
 
-        return convertToDTO(application);
+        return convertToDTO(updated);
     }
 
     // =========================================================
     // DELETE APPLICATION
     // =========================================================
 
-    @Transactional
     public void deleteApplication(Long id) {
 
-        JobApplication application =
-                jobApplicationRepository
-                        .findById(id)
-                        .orElseThrow(() ->
-                                new RuntimeException(
-                                        "Application not found"
-                                )
-                        );
+        if (!jobApplicationRepository.existsById(id)) {
 
-        jobApplicationRepository.delete(application);
+            throw new RuntimeException(
+                    "Application not found with id: "
+                            + id
+            );
+        }
+
+        jobApplicationRepository.deleteById(id);
     }
 
     // =========================================================
-    // GET APPLICATIONS BY JOB
-    // =========================================================
-
-    public List<ApplicationDTO> getApplicationsByJob(
-            Long jobId) {
-
-        return jobApplicationRepository
-                .findByJobId(jobId)
-                .stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-    }
-
-    // =========================================================
-    // DELETE APPLICATIONS BY APPLICANT
-    // =========================================================
-
-    @Transactional
-    public void deleteApplicationsByApplicant(
-            Long applicantId) {
-
-        jobApplicationRepository
-                .deleteByApplicantId(applicantId);
-    }
-
-    // =========================================================
-    // DELETE APPLICATIONS BY JOB
-    // =========================================================
-
-    @Transactional
-    public void deleteApplicationsByJob(
-            Long jobId) {
-
-        jobApplicationRepository
-                .deleteByJobId(jobId);
-    }
-
-    // =========================================================
-    // CONVERT ENTITY -> DTO
+    // ENTITY → DTO
     // =========================================================
 
     private ApplicationDTO convertToDTO(
             JobApplication application) {
 
-        ApplicationDTO dto = new ApplicationDTO();
+        ApplicationDTO dto =
+                new ApplicationDTO();
 
         dto.setId(application.getId());
 
         // -----------------------------------------------------
-        // APPLICANT
+        // Applicant
         // -----------------------------------------------------
 
         if (application.getApplicant() != null) {
 
             dto.setApplicantId(
-                    application.getApplicant().getId()
-            );
-
-            dto.setApplicantName(
-                    application.getApplicant().getFullName()
+                    application
+                            .getApplicant()
+                            .getId()
             );
         }
 
         // -----------------------------------------------------
-        // JOB
+        // Job
         // -----------------------------------------------------
 
         if (application.getJob() != null) {
 
             dto.setJobId(
-                    application.getJob().getId()
+                    application
+                            .getJob()
+                            .getId()
             );
 
             dto.setCompany(
-                    application.getJob().getCompany()
-            );
-
-            dto.setPosition(
-                    application.getJob().getPosition()
+                    application
+                            .getJob()
+                            .getCompany()
             );
         }
 
         // -----------------------------------------------------
-        // STATUS
+        // Status
         // -----------------------------------------------------
 
-        dto.setStatus(
-                application.getStatus()
-        );
+        if (application.getStatus() != null) {
+            dto.setStatus(application.getStatus());
+        }
 
         return dto;
-    }
-
-    // =========================================================
-    // GET CURRENT USERNAME FROM JWT / SECURITY CONTEXT
-    // =========================================================
-
-    private String getCurrentUsername() {
-
-        Authentication authentication =
-                SecurityContextHolder
-                        .getContext()
-                        .getAuthentication();
-
-        if (authentication == null ||
-                !authentication.isAuthenticated()) {
-
-            throw new RuntimeException(
-                    "User is not authenticated"
-            );
-        }
-
-        String username =
-                authentication.getName();
-
-        if (username == null ||
-                username.isBlank()) {
-
-            throw new RuntimeException(
-                    "Unable to identify logged-in user"
-            );
-        }
-
-        return username;
     }
 }

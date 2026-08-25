@@ -1,70 +1,114 @@
 package com.aktech.overseas.repository;
 
+import com.aktech.overseas.entity.ApplicationStatus;
 import com.aktech.overseas.entity.JobApplication;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
 
-@Repository
 public interface JobApplicationRepository
         extends JpaRepository<JobApplication, Long> {
 
     // =========================================================
-    // APPLICANT + JOB
+    // CHECK IF APPLICANT ALREADY APPLIED FOR JOB
     // =========================================================
 
+    @Query("""
+            SELECT CASE WHEN COUNT(a) > 0 THEN true ELSE false END
+            FROM JobApplication a
+            WHERE a.applicant.id = :applicantId
+              AND a.job.id = :jobId
+            """)
+    boolean existsByApplicantIdAndJobId(
+            @Param("applicantId") Long applicantId,
+            @Param("jobId") Long jobId
+    );
+
+    // =========================================================
+    // FIND APPLICATION BY APPLICANT AND JOB
+    // =========================================================
+
+    @Query("""
+            SELECT a
+            FROM JobApplication a
+            WHERE a.applicant.id = :applicantId
+              AND a.job.id = :jobId
+            """)
     Optional<JobApplication> findByApplicantIdAndJobId(
-            Long applicantId,
-            Long jobId
+            @Param("applicantId") Long applicantId,
+            @Param("jobId") Long jobId
     );
 
     // =========================================================
-    // APPLICANT APPLICATIONS
+    // GET ALL APPLICATIONS OF AN APPLICANT
     // =========================================================
 
+    @Query("""
+            SELECT a
+            FROM JobApplication a
+            WHERE a.applicant.id = :applicantId
+            ORDER BY a.id DESC
+            """)
     List<JobApplication> findByApplicantId(
-            Long applicantId
+            @Param("applicantId") Long applicantId
     );
 
     // =========================================================
-    // JOB APPLICATIONS
+    // GET APPLICATIONS FOR EMPLOYER'S JOBS
     // =========================================================
 
-    List<JobApplication> findByJobId(
-            Long jobId
-    );
-
-    // =========================================================
-    // EMPLOYER'S JOB APPLICATIONS
-    // =========================================================
-
+    @Query("""
+            SELECT a
+            FROM JobApplication a
+            WHERE a.job.employer.id = :employerId
+            ORDER BY a.id DESC
+            """)
     List<JobApplication> findByJobEmployerId(
-            Long employerId
+            @Param("employerId") Long employerId
     );
 
     // =========================================================
-    // DELETE APPLICANT APPLICATIONS
+    // GET APPLICATIONS BY STATUS
     // =========================================================
 
-    void deleteByApplicantId(
-            Long applicantId
+    List<JobApplication> findByStatus(
+            ApplicationStatus status
     );
 
     // =========================================================
-    // DELETE JOB APPLICATIONS
-    // =========================================================
-
-    void deleteByJobId(
-            Long jobId
-    );
-
-    // =========================================================
-    // STATUS
+    // COUNT APPLICATIONS BY STATUS
     // =========================================================
 
     long countByStatus(
-            com.aktech.overseas.entity.ApplicationStatus status
+            ApplicationStatus status
+    );
+
+    // =========================================================
+    // COUNT APPLICANT APPLICATIONS
+    // =========================================================
+
+    @Query("""
+            SELECT COUNT(a)
+            FROM JobApplication a
+            WHERE a.applicant.id = :applicantId
+            """)
+    long countByApplicantId(
+            @Param("applicantId") Long applicantId
+    );
+
+    // =========================================================
+    // COUNT EMPLOYER APPLICATIONS
+    // =========================================================
+
+    @Query("""
+            SELECT COUNT(a)
+            FROM JobApplication a
+            WHERE a.job.employer.id = :employerId
+            """)
+    long countByJobEmployerId(
+            @Param("employerId") Long employerId
     );
 }

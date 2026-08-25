@@ -1,6 +1,7 @@
 package com.aktech.overseas.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
@@ -25,11 +26,11 @@ public class Job {
     // FOREIGN or DOMESTIC
     private String jobType;
 
-    // Remotive descriptions can be very long
+    // Job description
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    // Remotive job information can be long
+    // Job requirements
     @Column(columnDefinition = "TEXT")
     private String requirements;
 
@@ -41,24 +42,31 @@ public class Job {
 
     private Boolean verified = false;
 
-    // Example: Recruitment Agency / Company / External Source
+    // Example:
+    // Recruitment Agency / Company / External Source
     private String source;
 
-    // External job ID from Remotive
+    // External job ID from Remotive or another source
     @Column(name = "external_job_id")
     private String externalJobId;
 
-    // Original job URL
+    // Original external job URL
     @Column(columnDefinition = "TEXT")
     private String sourceUrl;
 
-    // Many Jobs belong to One Employer
+    // =========================================================
+    // EMPLOYER
+    // =========================================================
+
     @ManyToOne
     @JoinColumn(name = "employer_id")
     @JsonIgnore
     private Employer employer;
 
-    // One Job has Many Applications
+    // =========================================================
+    // APPLICATIONS
+    // =========================================================
+
     @OneToMany(
             mappedBy = "job",
             cascade = CascadeType.ALL,
@@ -67,8 +75,16 @@ public class Job {
     @JsonIgnore
     private List<JobApplication> applications;
 
+    // =========================================================
+    // CONSTRUCTOR
+    // =========================================================
+
     public Job() {
     }
+
+    // =========================================================
+    // ID
+    // =========================================================
 
     public Long getId() {
         return id;
@@ -78,6 +94,10 @@ public class Job {
         this.id = id;
     }
 
+    // =========================================================
+    // COUNTRY
+    // =========================================================
+
     public String getCountry() {
         return country;
     }
@@ -85,6 +105,10 @@ public class Job {
     public void setCountry(String country) {
         this.country = country;
     }
+
+    // =========================================================
+    // COMPANY
+    // =========================================================
 
     public String getCompany() {
         return company;
@@ -94,6 +118,10 @@ public class Job {
         this.company = company;
     }
 
+    // =========================================================
+    // POSITION
+    // =========================================================
+
     public String getPosition() {
         return position;
     }
@@ -101,6 +129,10 @@ public class Job {
     public void setPosition(String position) {
         this.position = position;
     }
+
+    // =========================================================
+    // SALARY
+    // =========================================================
 
     public String getSalary() {
         return salary;
@@ -110,6 +142,10 @@ public class Job {
         this.salary = salary;
     }
 
+    // =========================================================
+    // JOB TYPE
+    // =========================================================
+
     public String getJobType() {
         return jobType;
     }
@@ -117,6 +153,10 @@ public class Job {
     public void setJobType(String jobType) {
         this.jobType = jobType;
     }
+
+    // =========================================================
+    // DESCRIPTION
+    // =========================================================
 
     public String getDescription() {
         return description;
@@ -126,6 +166,10 @@ public class Job {
         this.description = description;
     }
 
+    // =========================================================
+    // REQUIREMENTS
+    // =========================================================
+
     public String getRequirements() {
         return requirements;
     }
@@ -133,6 +177,10 @@ public class Job {
     public void setRequirements(String requirements) {
         this.requirements = requirements;
     }
+
+    // =========================================================
+    // EXPERIENCE
+    // =========================================================
 
     public String getExperience() {
         return experience;
@@ -142,6 +190,10 @@ public class Job {
         this.experience = experience;
     }
 
+    // =========================================================
+    // VACANCIES
+    // =========================================================
+
     public Integer getVacancies() {
         return vacancies;
     }
@@ -149,6 +201,10 @@ public class Job {
     public void setVacancies(Integer vacancies) {
         this.vacancies = vacancies;
     }
+
+    // =========================================================
+    // EXPIRY DATE
+    // =========================================================
 
     public LocalDate getExpiryDate() {
         return expiryDate;
@@ -158,6 +214,10 @@ public class Job {
         this.expiryDate = expiryDate;
     }
 
+    // =========================================================
+    // VERIFIED
+    // =========================================================
+
     public Boolean getVerified() {
         return verified;
     }
@@ -165,6 +225,10 @@ public class Job {
     public void setVerified(Boolean verified) {
         this.verified = verified;
     }
+
+    // =========================================================
+    // SOURCE
+    // =========================================================
 
     public String getSource() {
         return source;
@@ -174,6 +238,10 @@ public class Job {
         this.source = source;
     }
 
+    // =========================================================
+    // EXTERNAL JOB ID
+    // =========================================================
+
     public String getExternalJobId() {
         return externalJobId;
     }
@@ -181,6 +249,10 @@ public class Job {
     public void setExternalJobId(String externalJobId) {
         this.externalJobId = externalJobId;
     }
+
+    // =========================================================
+    // SOURCE URL
+    // =========================================================
 
     public String getSourceUrl() {
         return sourceUrl;
@@ -190,6 +262,10 @@ public class Job {
         this.sourceUrl = sourceUrl;
     }
 
+    // =========================================================
+    // EMPLOYER
+    // =========================================================
+
     public Employer getEmployer() {
         return employer;
     }
@@ -197,6 +273,38 @@ public class Job {
     public void setEmployer(Employer employer) {
         this.employer = employer;
     }
+
+    // =========================================================
+    // EMPLOYER ID
+    // =========================================================
+    //
+    // Employer itself remains hidden because of @JsonIgnore.
+    //
+    // Flutter receives only:
+    //
+    // "employerId": 7
+    //
+    // for employer-created jobs.
+    //
+    // External jobs return:
+    //
+    // "employerId": null
+    //
+    // =========================================================
+
+    @JsonProperty("employerId")
+    public Long getEmployerId() {
+
+        if (employer == null) {
+            return null;
+        }
+
+        return employer.getId();
+    }
+
+    // =========================================================
+    // APPLICATIONS
+    // =========================================================
 
     public List<JobApplication> getApplications() {
         return applications;

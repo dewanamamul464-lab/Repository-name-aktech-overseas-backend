@@ -83,22 +83,19 @@ public class EmployerService {
                         )
                 );
 
-        return jobRepository.findByEmployerId(employerId);
+        return jobRepository.findByEmployer_Id(employerId);
     }
 
     // =========================================================
     // GET EMPLOYER'S APPLICATIONS
     // =========================================================
 
-    public List<ApplicationDTO> getApplications(
-            Long employerId) {
+    public List<ApplicationDTO> getApplications(Long employerId) {
 
         employerRepository
                 .findById(employerId)
                 .orElseThrow(() ->
-                        new RuntimeException(
-                                "Employer not found"
-                        )
+                        new RuntimeException("Employer not found")
                 );
 
         return jobApplicationRepository
@@ -107,29 +104,12 @@ public class EmployerService {
                 .map(application ->
                         new ApplicationDTO(
                                 application.getId(),
-
-                                application
-                                        .getApplicant()
-                                        .getId(),
-
-                                application
-                                        .getApplicant()
-                                        .getFullName(),
-
-                                application
-                                        .getJob()
-                                        .getId(),
-
-                                application
-                                        .getJob()
-                                        .getCompany(),
-
-                                application
-                                        .getJob()
-                                        .getPosition(),
-
-                                application
-                                        .getStatus()
+                                application.getApplicant().getId(),
+                                application.getApplicant().getFullName(),
+                                application.getJob().getId(),
+                                application.getJob().getCompany(),
+                                application.getJob().getPosition(),
+                                application.getStatus()
                         )
                 )
                 .toList();
