@@ -1,4 +1,5 @@
-package com.aktech.overseas.security;
+
+        package com.aktech.overseas.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -81,6 +82,9 @@ public class SecurityConfig {
                                 "/auth/**",
                                 "/hello",
                                 "/api/test",
+
+                                // Spring Boot health check
+                                "/actuator/health",
 
                                 // Remotive job import/testing
                                 "/api/remotive/**"
@@ -230,3 +234,4 @@ public class SecurityConfig {
         return configuration.getAuthenticationManager();
     }
 }
+
