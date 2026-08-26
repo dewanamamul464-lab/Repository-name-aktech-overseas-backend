@@ -63,21 +63,10 @@ public class JobApplicationService {
             );
         }
 
-        /*
-         * IMPORTANT:
-         *
-         * authentication.getName() returns the username
-         * stored in the JWT subject.
-         *
-         * Example:
-         *
-         * JWT subject = "amamul"
-         *
-         * Therefore we must search Applicant through
-         * Applicant.user.username, NOT Applicant.email.
-         */
+        // JWT authentication name is the username
         String username = authentication.getName();
 
+        // Find Applicant through User -> username
         Applicant applicant =
                 applicantRepository
                         .findByUserUsername(username)
@@ -88,6 +77,7 @@ public class JobApplicationService {
                                 )
                         );
 
+        // Find requested job
         Job job =
                 jobRepository
                         .findById(dto.getJobId())
@@ -151,13 +141,10 @@ public class JobApplicationService {
             );
         }
 
-        /*
-         * authentication.getName() is the username.
-         *
-         * Do NOT use findByEmail() here.
-         */
+        // JWT authentication name = username
         String username = authentication.getName();
 
+        // Find applicant using username
         Applicant applicant =
                 applicantRepository
                         .findByUserUsername(username)
@@ -194,6 +181,12 @@ public class JobApplicationService {
 
     public ApplicationDTO getApplicationById(Long id) {
 
+        if (id == null) {
+            throw new RuntimeException(
+                    "Application ID is required."
+            );
+        }
+
         JobApplication application =
                 jobApplicationRepository
                         .findById(id)
@@ -212,6 +205,12 @@ public class JobApplicationService {
     // =========================================================
 
     public ApplicationDTO approveApplication(Long id) {
+
+        if (id == null) {
+            throw new RuntimeException(
+                    "Application ID is required."
+            );
+        }
 
         JobApplication application =
                 jobApplicationRepository
@@ -239,6 +238,12 @@ public class JobApplicationService {
 
     public ApplicationDTO rejectApplication(Long id) {
 
+        if (id == null) {
+            throw new RuntimeException(
+                    "Application ID is required."
+            );
+        }
+
         JobApplication application =
                 jobApplicationRepository
                         .findById(id)
@@ -265,6 +270,12 @@ public class JobApplicationService {
 
     public void deleteApplication(Long id) {
 
+        if (id == null) {
+            throw new RuntimeException(
+                    "Application ID is required."
+            );
+        }
+
         if (!jobApplicationRepository.existsById(id)) {
 
             throw new RuntimeException(
@@ -277,7 +288,7 @@ public class JobApplicationService {
     }
 
     // =========================================================
-    // ENTITY → DTO
+    // ENTITY -> DTO
     // =========================================================
 
     private ApplicationDTO convertToDTO(
@@ -286,11 +297,17 @@ public class JobApplicationService {
         ApplicationDTO dto =
                 new ApplicationDTO();
 
-        dto.setId(application.getId());
+        // =====================================================
+        // APPLICATION ID
+        // =====================================================
 
-        // -----------------------------------------------------
-        // Applicant
-        // -----------------------------------------------------
+        dto.setId(
+                application.getId()
+        );
+
+        // =====================================================
+        // APPLICANT
+        // =====================================================
 
         if (application.getApplicant() != null) {
 
@@ -301,9 +318,9 @@ public class JobApplicationService {
             );
         }
 
-        // -----------------------------------------------------
-        // Job
-        // -----------------------------------------------------
+        // =====================================================
+        // JOB
+        // =====================================================
 
         if (application.getJob() != null) {
 
@@ -320,9 +337,9 @@ public class JobApplicationService {
             );
         }
 
-        // -----------------------------------------------------
-        // Status
-        // -----------------------------------------------------
+        // =====================================================
+        // STATUS
+        // =====================================================
 
         if (application.getStatus() != null) {
 
