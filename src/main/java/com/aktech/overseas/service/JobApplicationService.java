@@ -63,14 +63,28 @@ public class JobApplicationService {
             );
         }
 
-        String email = authentication.getName();
+        /*
+         * IMPORTANT:
+         *
+         * authentication.getName() returns the username
+         * stored in the JWT subject.
+         *
+         * Example:
+         *
+         * JWT subject = "amamul"
+         *
+         * Therefore we must search Applicant through
+         * Applicant.user.username, NOT Applicant.email.
+         */
+        String username = authentication.getName();
 
         Applicant applicant =
                 applicantRepository
-                        .findByEmail(email)
+                        .findByUserUsername(username)
                         .orElseThrow(() ->
                                 new RuntimeException(
-                                        "Applicant not found."
+                                        "Applicant not found for username: "
+                                                + username
                                 )
                         );
 
@@ -84,7 +98,10 @@ public class JobApplicationService {
                                 )
                         );
 
-        // Prevent duplicate application
+        // =====================================================
+        // PREVENT DUPLICATE APPLICATION
+        // =====================================================
+
         if (jobApplicationRepository
                 .existsByApplicantIdAndJobId(
                         applicant.getId(),
@@ -95,13 +112,16 @@ public class JobApplicationService {
             );
         }
 
+        // =====================================================
+        // CREATE APPLICATION
+        // =====================================================
+
         JobApplication application =
                 new JobApplication();
 
         application.setApplicant(applicant);
         application.setJob(job);
 
-        // ApplicationStatus is an enum
         application.setStatus(
                 ApplicationStatus.PENDING
         );
@@ -131,14 +151,20 @@ public class JobApplicationService {
             );
         }
 
-        String email = authentication.getName();
+        /*
+         * authentication.getName() is the username.
+         *
+         * Do NOT use findByEmail() here.
+         */
+        String username = authentication.getName();
 
         Applicant applicant =
                 applicantRepository
-                        .findByEmail(email)
+                        .findByUserUsername(username)
                         .orElseThrow(() ->
                                 new RuntimeException(
-                                        "Applicant not found."
+                                        "Applicant not found for username: "
+                                                + username
                                 )
                         );
 
@@ -299,7 +325,10 @@ public class JobApplicationService {
         // -----------------------------------------------------
 
         if (application.getStatus() != null) {
-            dto.setStatus(application.getStatus());
+
+            dto.setStatus(
+                    application.getStatus()
+            );
         }
 
         return dto;
