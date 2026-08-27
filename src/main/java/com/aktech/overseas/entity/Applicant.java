@@ -10,9 +10,17 @@ import java.util.List;
 @Table(name = "applicants")
 public class Applicant {
 
+    // =========================================================
+    // PRIMARY KEY
+    // =========================================================
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    // =========================================================
+    // APPLICANT INFORMATION
+    // =========================================================
 
     private String fullName;
 
@@ -64,6 +72,18 @@ public class Applicant {
 
     // =========================================================
     // JOB APPLICATIONS
+    //
+    // @JsonIgnore prevents infinite JSON recursion:
+    //
+    // Applicant
+    //    -> applications
+    //       -> applicant
+    //          -> applications
+    //             -> applicant
+    //                -> ...
+    //
+    // Database relationship is NOT affected.
+    // Applications are still deleted through cascade/orphanRemoval.
     // =========================================================
 
     @JsonIgnore
@@ -82,7 +102,7 @@ public class Applicant {
     }
 
     // =========================================================
-    // GETTERS & SETTERS
+    // GET ID
     // =========================================================
 
     public Long getId() {
@@ -93,6 +113,10 @@ public class Applicant {
         this.id = id;
     }
 
+    // =========================================================
+    // GET FULL NAME
+    // =========================================================
+
     public String getFullName() {
         return fullName;
     }
@@ -100,6 +124,10 @@ public class Applicant {
     public void setFullName(String fullName) {
         this.fullName = fullName;
     }
+
+    // =========================================================
+    // GET EMAIL
+    // =========================================================
 
     public String getEmail() {
         return email;
@@ -109,6 +137,10 @@ public class Applicant {
         this.email = email;
     }
 
+    // =========================================================
+    // GET PHONE
+    // =========================================================
+
     public String getPhone() {
         return phone;
     }
@@ -116,6 +148,10 @@ public class Applicant {
     public void setPhone(String phone) {
         this.phone = phone;
     }
+
+    // =========================================================
+    // GET COUNTRY
+    // =========================================================
 
     public String getCountry() {
         return country;
@@ -125,6 +161,10 @@ public class Applicant {
         this.country = country;
     }
 
+    // =========================================================
+    // GET EXPERIENCE
+    // =========================================================
+
     public String getExperience() {
         return experience;
     }
@@ -132,6 +172,10 @@ public class Applicant {
     public void setExperience(String experience) {
         this.experience = experience;
     }
+
+    // =========================================================
+    // GET SKILLS
+    // =========================================================
 
     public String getSkills() {
         return skills;
@@ -141,6 +185,10 @@ public class Applicant {
         this.skills = skills;
     }
 
+    // =========================================================
+    // GET PASSPORT NUMBER
+    // =========================================================
+
     public String getPassportNumber() {
         return passportNumber;
     }
@@ -148,6 +196,10 @@ public class Applicant {
     public void setPassportNumber(String passportNumber) {
         this.passportNumber = passportNumber;
     }
+
+    // =========================================================
+    // GET CV FILE NAME
+    // =========================================================
 
     public String getCvFileName() {
         return cvFileName;
@@ -157,6 +209,10 @@ public class Applicant {
         this.cvFileName = cvFileName;
     }
 
+    // =========================================================
+    // GET CV URL
+    // =========================================================
+
     public String getCvUrl() {
         return cvUrl;
     }
@@ -164,6 +220,10 @@ public class Applicant {
     public void setCvUrl(String cvUrl) {
         this.cvUrl = cvUrl;
     }
+
+    // =========================================================
+    // GET CV UPLOADED DATE
+    // =========================================================
 
     public LocalDateTime getCvUploadedAt() {
         return cvUploadedAt;
@@ -173,6 +233,10 @@ public class Applicant {
         this.cvUploadedAt = cvUploadedAt;
     }
 
+    // =========================================================
+    // GET PROFILE IMAGE
+    // =========================================================
+
     public String getProfileImage() {
         return profileImage;
     }
@@ -180,6 +244,10 @@ public class Applicant {
     public void setProfileImage(String profileImage) {
         this.profileImage = profileImage;
     }
+
+    // =========================================================
+    // GET USER
+    // =========================================================
 
     public User getUser() {
         return user;
@@ -189,11 +257,17 @@ public class Applicant {
         this.user = user;
     }
 
+    // =========================================================
+    // GET APPLICATIONS
+    // =========================================================
+
     public List<JobApplication> getApplications() {
         return applications;
     }
 
-    public void setApplications(List<JobApplication> applications) {
+    public void setApplications(
+            List<JobApplication> applications) {
+
         this.applications = applications;
     }
 }
