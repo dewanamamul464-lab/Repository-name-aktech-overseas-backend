@@ -1,4 +1,5 @@
-package com.aktech.overseas.service;
+
+        package com.aktech.overseas.service;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
@@ -11,10 +12,62 @@ public class EmailService {
     private final JavaMailSender mailSender;
 
     @Value("${spring.mail.username}")
-    private String senderEmail;
+    private String fromEmail;
 
     public EmailService(JavaMailSender mailSender) {
         this.mailSender = mailSender;
+    }
+
+    // =========================================================
+    // COMMON EMAIL METHOD
+    // =========================================================
+
+    public void sendEmail(
+            String to,
+            String subject,
+            String text) {
+
+        try {
+
+            SimpleMailMessage message =
+                    new SimpleMailMessage();
+
+            message.setFrom(fromEmail);
+            message.setTo(to);
+            message.setSubject(subject);
+            message.setText(text);
+
+            mailSender.send(message);
+
+            System.out.println(
+                    "EMAIL SENT SUCCESSFULLY"
+            );
+
+            System.out.println(
+                    "TO: " + to
+            );
+
+        } catch (Exception e) {
+
+            System.err.println(
+                    "EMAIL SENDING FAILED"
+            );
+
+            System.err.println(
+                    "TO: " + to
+            );
+
+            System.err.println(
+                    "ERROR: " + e.getMessage()
+            );
+
+            /*
+             * Do NOT throw the exception again.
+             *
+             * Registration / approval should not fail
+             * just because an email could not be delivered.
+             */
+        }
     }
 
     // =========================================================
@@ -26,49 +79,27 @@ public class EmailService {
             String fullName,
             String username) {
 
-        try {
+        String subject =
+                "Welcome to AKTech Overseas";
 
-            SimpleMailMessage message =
-                    new SimpleMailMessage();
+        String text =
+                "Dear " + fullName + ",\n\n"
+                        + "Welcome to AKTech Overseas!\n\n"
+                        + "Your applicant account has been "
+                        + "successfully created.\n\n"
+                        + "Username: " + username + "\n\n"
+                        + "You can now log in to the AKTech Overseas "
+                        + "mobile application and explore available "
+                        + "job opportunities.\n\n"
+                        + "Thank you for joining AKTech Overseas.\n\n"
+                        + "Best regards,\n"
+                        + "AKTech Overseas";
 
-            message.setFrom(senderEmail);
-            message.setTo(email);
-
-            message.setSubject(
-                    "Welcome to AKTech Overseas"
-            );
-
-            message.setText(
-                    "Dear " + fullName + ",\n\n"
-                            + "Welcome to AKTech Overseas!\n\n"
-                            + "Your applicant account has been "
-                            + "successfully created.\n\n"
-                            + "Username: " + username + "\n\n"
-                            + "You can now log in to the "
-                            + "AKTech Overseas mobile application "
-                            + "and explore available jobs.\n\n"
-                            + "Thank you for choosing "
-                            + "AKTech Overseas.\n\n"
-                            + "Best regards,\n"
-                            + "AKTech Overseas Team"
-            );
-
-            mailSender.send(message);
-
-            System.out.println(
-                    "Applicant registration email sent to: "
-                            + email
-            );
-
-        } catch (Exception e) {
-
-            System.err.println(
-                    "Failed to send applicant registration email "
-                            + "to: " + email
-            );
-
-            e.printStackTrace();
-        }
+        sendEmail(
+                email,
+                subject,
+                text
+        );
     }
 
     // =========================================================
@@ -81,54 +112,30 @@ public class EmailService {
             String employerEmail,
             String companyName) {
 
-        try {
+        String subject =
+                "New Employer Registration - AKTech Overseas";
 
-            SimpleMailMessage message =
-                    new SimpleMailMessage();
+        String text =
+                "Dear Admin,\n\n"
+                        + "A new employer has registered on "
+                        + "AKTech Overseas.\n\n"
+                        + "Company Name: "
+                        + companyName + "\n"
+                        + "Contact Person: "
+                        + contactPerson + "\n"
+                        + "Employer Email: "
+                        + employerEmail + "\n\n"
+                        + "The employer account is currently "
+                        + "PENDING approval.\n\n"
+                        + "Please log in to the admin panel and "
+                        + "review the employer registration.\n\n"
+                        + "AKTech Overseas";
 
-            message.setFrom(senderEmail);
-            message.setTo(adminEmail);
-
-            message.setSubject(
-                    "New Employer Registration - "
-                            + companyName
-            );
-
-            message.setText(
-                    "Dear Admin,\n\n"
-                            + "A new employer has registered "
-                            + "on AKTech Overseas.\n\n"
-                            + "Company Name: "
-                            + companyName + "\n"
-                            + "Contact Person: "
-                            + contactPerson + "\n"
-                            + "Employer Email: "
-                            + employerEmail + "\n\n"
-                            + "The employer account is currently "
-                            + "PENDING approval.\n\n"
-                            + "Please log in to the admin account "
-                            + "and review the employer registration.\n\n"
-                            + "Best regards,\n"
-                            + "AKTech Overseas System"
-            );
-
-            mailSender.send(message);
-
-            System.out.println(
-                    "Employer registration notification sent "
-                            + "to admin: " + adminEmail
-            );
-
-        } catch (Exception e) {
-
-            System.err.println(
-                    "Failed to send employer registration "
-                            + "notification to admin: "
-                            + adminEmail
-            );
-
-            e.printStackTrace();
-        }
+        sendEmail(
+                adminEmail,
+                subject,
+                text
+        );
     }
 
     // =========================================================
@@ -140,53 +147,26 @@ public class EmailService {
             String contactPerson,
             String companyName) {
 
-        try {
+        String subject =
+                "Employer Account Approved - AKTech Overseas";
 
-            SimpleMailMessage message =
-                    new SimpleMailMessage();
+        String text =
+                "Dear " + contactPerson + ",\n\n"
+                        + "We are pleased to inform you that your "
+                        + "employer account for "
+                        + companyName
+                        + " has been APPROVED.\n\n"
+                        + "You can now log in to the AKTech Overseas "
+                        + "application and use the employer features.\n\n"
+                        + "Thank you for choosing AKTech Overseas.\n\n"
+                        + "Best regards,\n"
+                        + "AKTech Overseas";
 
-            message.setFrom(senderEmail);
-            message.setTo(employerEmail);
-
-            message.setSubject(
-                    "Employer Account Approved - "
-                            + "AKTech Overseas"
-            );
-
-            message.setText(
-                    "Dear " + contactPerson + ",\n\n"
-                            + "Congratulations!\n\n"
-                            + "Your employer account for "
-                            + companyName
-                            + " has been approved by the "
-                            + "AKTech Overseas administration team.\n\n"
-                            + "You can now log in to the "
-                            + "AKTech Overseas application and "
-                            + "access your employer account.\n\n"
-                            + "You can create and manage job "
-                            + "vacancies from your employer account.\n\n"
-                            + "Thank you for choosing "
-                            + "AKTech Overseas.\n\n"
-                            + "Best regards,\n"
-                            + "AKTech Overseas Admin Team"
-            );
-
-            mailSender.send(message);
-
-            System.out.println(
-                    "Employer approval email sent to: "
-                            + employerEmail
-            );
-
-        } catch (Exception e) {
-
-            System.err.println(
-                    "Failed to send employer approval email "
-                            + "to: " + employerEmail
-            );
-
-            e.printStackTrace();
-        }
+        sendEmail(
+                employerEmail,
+                subject,
+                text
+        );
     }
 
     // =========================================================
@@ -198,51 +178,26 @@ public class EmailService {
             String contactPerson,
             String companyName) {
 
-        try {
+        String subject =
+                "Employer Account Rejected - AKTech Overseas";
 
-            SimpleMailMessage message =
-                    new SimpleMailMessage();
+        String text =
+                "Dear " + contactPerson + ",\n\n"
+                        + "We regret to inform you that the employer "
+                        + "registration for "
+                        + companyName
+                        + " has been REJECTED.\n\n"
+                        + "If you believe this decision was made in "
+                        + "error or you would like more information, "
+                        + "please contact AKTech Overseas administration.\n\n"
+                        + "Best regards,\n"
+                        + "AKTech Overseas";
 
-            message.setFrom(senderEmail);
-            message.setTo(employerEmail);
-
-            message.setSubject(
-                    "Employer Account Rejected - "
-                            + "AKTech Overseas"
-            );
-
-            message.setText(
-                    "Dear " + contactPerson + ",\n\n"
-                            + "We regret to inform you that your "
-                            + "employer registration for "
-                            + companyName
-                            + " has been rejected by the "
-                            + "AKTech Overseas administration team.\n\n"
-                            + "If you believe this decision was "
-                            + "made in error or you would like "
-                            + "further information, please contact "
-                            + "the AKTech Overseas administration team.\n\n"
-                            + "Thank you for your interest in "
-                            + "AKTech Overseas.\n\n"
-                            + "Best regards,\n"
-                            + "AKTech Overseas Admin Team"
-            );
-
-            mailSender.send(message);
-
-            System.out.println(
-                    "Employer rejection email sent to: "
-                            + employerEmail
-            );
-
-        } catch (Exception e) {
-
-            System.err.println(
-                    "Failed to send employer rejection email "
-                            + "to: " + employerEmail
-            );
-
-            e.printStackTrace();
-        }
+        sendEmail(
+                employerEmail,
+                subject,
+                text
+        );
     }
 }
+

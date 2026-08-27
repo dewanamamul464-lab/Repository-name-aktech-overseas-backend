@@ -144,7 +144,11 @@ public class AuthService {
         applicantRepository.save(applicant);
 
         // -----------------------------------------------------
-        // SEND WELCOME EMAIL TO APPLICANT
+        // SEND WELCOME EMAIL ASYNCHRONOUSLY
+        //
+        // IMPORTANT:
+        // This no longer blocks registration.
+        // The applicant account is already saved.
         // -----------------------------------------------------
 
         emailService.sendApplicantRegistrationEmail(
@@ -154,7 +158,7 @@ public class AuthService {
         );
 
         // -----------------------------------------------------
-        // RETURN SUCCESS
+        // RETURN SUCCESS IMMEDIATELY
         // -----------------------------------------------------
 
         return "Applicant registered successfully.";
@@ -279,7 +283,7 @@ public class AuthService {
         employerRepository.save(employer);
 
         // -----------------------------------------------------
-        // NOTIFY ADMIN
+        // NOTIFY ADMIN ASYNCHRONOUSLY
         // -----------------------------------------------------
 
         emailService.sendEmployerRegistrationEmail(
@@ -290,7 +294,7 @@ public class AuthService {
         );
 
         // -----------------------------------------------------
-        // RETURN SUCCESS
+        // RETURN SUCCESS IMMEDIATELY
         // -----------------------------------------------------
 
         return "Employer registration submitted successfully. "
