@@ -1,21 +1,47 @@
+package com.aktech.overseas.service;
 
-        package com.aktech.overseas.service;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
+
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class EmailService {
 
-    private final JavaMailSender mailSender;
+    // =========================================================
+    // BREVO CONFIGURATION
+    // =========================================================
 
-    @Value("${spring.mail.username}")
-    private String fromEmail;
+    @Value("${BREVO_API_KEY:}")
+    private String brevoApiKey;
 
-    public EmailService(JavaMailSender mailSender) {
-        this.mailSender = mailSender;
+    @Value("${BREVO_SENDER_EMAIL:dakudrs@gmail.com}")
+    private String senderEmail;
+
+    @Value("${BREVO_SENDER_NAME:AKTech Overseas}")
+    private String senderName;
+
+    // =========================================================
+    // HTTP CLIENT
+    // =========================================================
+
+    private final HttpClient httpClient;
+
+    private final ObjectMapper objectMapper;
+
+    public EmailService(ObjectMapper objectMapper) {
+
+        this.objectMapper = objectMapper;
+
+        this.httpClient = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_1_1)
+                .build();
     }
 
     // =========================================================
@@ -29,23 +55,142 @@ public class EmailService {
 
         try {
 
-            SimpleMailMessage message =
-                    new SimpleMailMessage();
+            // -------------------------------------------------
+            // CHECK API KEY
+            // -------------------------------------------------
 
-            message.setFrom(fromEmail);
-            message.setTo(to);
-            message.setSubject(subject);
-            message.setText(text);
+            if (brevoApiKey == null
+                    || brevoApiKey.isBlank()) {
 
-            mailSender.send(message);
+                System.err.println(
+                        "BREVO EMAIL FAILED"
+                );
 
-            System.out.println(
-                    "EMAIL SENT SUCCESSFULLY"
-            );
+                System.err.println(
+                        "ERROR: BREVO_API_KEY is not configured"
+                );
 
-            System.out.println(
-                    "TO: " + to
-            );
+                return;
+            }
+
+            // -------------------------------------------------
+            // BREVO REQUEST BODY
+            // -------------------------------------------------
+
+            Map<String, Object> sender =
+                    Map.of(
+                            "name",
+                            senderName,
+
+                            "email",
+                            senderEmail
+                    );
+
+            Map<String, String> recipient =
+                    Map.of(
+                            "email",
+                            to
+                    );
+
+            Map<String, Object> requestBody =
+                    Map.of(
+                            "sender",
+                            sender,
+
+                            "to",
+                            List.of(recipient),
+
+                            "subject",
+                            subject,
+
+                            "textContent",
+                            text
+                    );
+
+            String json =
+                    objectMapper.writeValueAsString(
+                            requestBody
+                    );
+
+            // -------------------------------------------------
+            // CREATE BREVO HTTP REQUEST
+            // -------------------------------------------------
+
+            HttpRequest request =
+                    HttpRequest.newBuilder()
+                            .uri(
+                                    URI.create(
+                                            "https://api.brevo.com/v3/smtp/email"
+                                    )
+                            )
+                            .header(
+                                    "accept",
+                                    "application/json"
+                            )
+                            .header(
+                                    "api-key",
+                                    brevoApiKey
+                            )
+                            .header(
+                                    "content-type",
+                                    "application/json"
+                            )
+                            .POST(
+                                    HttpRequest.BodyPublishers
+                                            .ofString(json)
+                            )
+                            .build();
+
+            // -------------------------------------------------
+            // SEND EMAIL
+            // -------------------------------------------------
+
+            HttpResponse<String> response =
+                    httpClient.send(
+                            request,
+                            HttpResponse.BodyHandlers.ofString()
+                    );
+
+            // -------------------------------------------------
+            // CHECK RESPONSE
+            // -------------------------------------------------
+
+            if (response.statusCode() >= 200
+                    && response.statusCode() < 300) {
+
+                System.out.println(
+                        "EMAIL SENT SUCCESSFULLY"
+                );
+
+                System.out.println(
+                        "TO: " + to
+                );
+
+                System.out.println(
+                        "BREVO RESPONSE: "
+                                + response.body()
+                );
+
+            } else {
+
+                System.err.println(
+                        "EMAIL SENDING FAILED"
+                );
+
+                System.err.println(
+                        "TO: " + to
+                );
+
+                System.err.println(
+                        "BREVO HTTP STATUS: "
+                                + response.statusCode()
+                );
+
+                System.err.println(
+                        "BREVO RESPONSE: "
+                                + response.body()
+                );
+            }
 
         } catch (Exception e) {
 
@@ -60,13 +205,6 @@ public class EmailService {
             System.err.println(
                     "ERROR: " + e.getMessage()
             );
-
-            /*
-             * Do NOT throw the exception again.
-             *
-             * Registration / approval should not fail
-             * just because an email could not be delivered.
-             */
         }
     }
 
@@ -200,4 +338,3 @@ public class EmailService {
         );
     }
 }
-
