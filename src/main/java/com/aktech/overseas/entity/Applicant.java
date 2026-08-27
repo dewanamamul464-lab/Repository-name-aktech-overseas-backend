@@ -1,5 +1,6 @@
 package com.aktech.overseas.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -65,6 +66,7 @@ public class Applicant {
     // JOB APPLICATIONS
     // =========================================================
 
+    @JsonIgnore
     @OneToMany(
             mappedBy = "applicant",
             cascade = CascadeType.ALL,
@@ -91,23 +93,11 @@ public class Applicant {
         this.id = id;
     }
 
-    public String getProfileImage() {
-        return profileImage;
-    }
-
-    public void setProfileImage(
-            String profileImage) {
-
-        this.profileImage = profileImage;
-    }
-
     public String getFullName() {
         return fullName;
     }
 
-    public void setFullName(
-            String fullName) {
-
+    public void setFullName(String fullName) {
         this.fullName = fullName;
     }
 
@@ -115,9 +105,7 @@ public class Applicant {
         return email;
     }
 
-    public void setEmail(
-            String email) {
-
+    public void setEmail(String email) {
         this.email = email;
     }
 
@@ -125,9 +113,7 @@ public class Applicant {
         return phone;
     }
 
-    public void setPhone(
-            String phone) {
-
+    public void setPhone(String phone) {
         this.phone = phone;
     }
 
@@ -135,9 +121,7 @@ public class Applicant {
         return country;
     }
 
-    public void setCountry(
-            String country) {
-
+    public void setCountry(String country) {
         this.country = country;
     }
 
@@ -145,9 +129,7 @@ public class Applicant {
         return experience;
     }
 
-    public void setExperience(
-            String experience) {
-
+    public void setExperience(String experience) {
         this.experience = experience;
     }
 
@@ -155,9 +137,7 @@ public class Applicant {
         return skills;
     }
 
-    public void setSkills(
-            String skills) {
-
+    public void setSkills(String skills) {
         this.skills = skills;
     }
 
@@ -165,20 +145,15 @@ public class Applicant {
         return passportNumber;
     }
 
-    public void setPassportNumber(
-            String passportNumber) {
-
-        this.passportNumber =
-                passportNumber;
+    public void setPassportNumber(String passportNumber) {
+        this.passportNumber = passportNumber;
     }
 
     public String getCvFileName() {
         return cvFileName;
     }
 
-    public void setCvFileName(
-            String cvFileName) {
-
+    public void setCvFileName(String cvFileName) {
         this.cvFileName = cvFileName;
     }
 
@@ -186,9 +161,7 @@ public class Applicant {
         return cvUrl;
     }
 
-    public void setCvUrl(
-            String cvUrl) {
-
+    public void setCvUrl(String cvUrl) {
         this.cvUrl = cvUrl;
     }
 
@@ -196,11 +169,16 @@ public class Applicant {
         return cvUploadedAt;
     }
 
-    public void setCvUploadedAt(
-            LocalDateTime cvUploadedAt) {
+    public void setCvUploadedAt(LocalDateTime cvUploadedAt) {
+        this.cvUploadedAt = cvUploadedAt;
+    }
 
-        this.cvUploadedAt =
-                cvUploadedAt;
+    public String getProfileImage() {
+        return profileImage;
+    }
+
+    public void setProfileImage(String profileImage) {
+        this.profileImage = profileImage;
     }
 
     public User getUser() {
@@ -215,9 +193,7 @@ public class Applicant {
         return applications;
     }
 
-    public void setApplications(
-            List<JobApplication> applications) {
-
+    public void setApplications(List<JobApplication> applications) {
         this.applications = applications;
     }
 }
