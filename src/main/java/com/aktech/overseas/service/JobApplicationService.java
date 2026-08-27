@@ -21,15 +21,18 @@ public class JobApplicationService {
     private final JobApplicationRepository jobApplicationRepository;
     private final ApplicantRepository applicantRepository;
     private final JobRepository jobRepository;
+    private final EmailService emailService;
 
     public JobApplicationService(
             JobApplicationRepository jobApplicationRepository,
             ApplicantRepository applicantRepository,
-            JobRepository jobRepository) {
+            JobRepository jobRepository,
+            EmailService emailService) {
 
         this.jobApplicationRepository = jobApplicationRepository;
         this.applicantRepository = applicantRepository;
         this.jobRepository = jobRepository;
+        this.emailService = emailService;
     }
 
     // =========================================================
@@ -63,10 +66,13 @@ public class JobApplicationService {
             );
         }
 
-        // JWT authentication name is the username
-        String username = authentication.getName();
+        // =====================================================
+        // FIND CURRENT APPLICANT
+        // =====================================================
 
-        // Find Applicant through User -> username
+        String username =
+                authentication.getName();
+
         Applicant applicant =
                 applicantRepository
                         .findByUserUsername(username)
@@ -77,7 +83,10 @@ public class JobApplicationService {
                                 )
                         );
 
-        // Find requested job
+        // =====================================================
+        // FIND JOB
+        // =====================================================
+
         Job job =
                 jobRepository
                         .findById(dto.getJobId())
@@ -119,6 +128,27 @@ public class JobApplicationService {
         JobApplication saved =
                 jobApplicationRepository.save(application);
 
+        // =====================================================
+        // SEND APPLICATION CONFIRMATION EMAIL
+        // =====================================================
+
+        try {
+
+            emailService.sendApplicationSubmittedEmail(
+                    applicant.getEmail(),
+                    applicant.getFullName(),
+                    job.getCompany(),
+                    saved.getId()
+            );
+
+        } catch (Exception e) {
+
+            System.err.println(
+                    "APPLICATION EMAIL FAILED: "
+                            + e.getMessage()
+            );
+        }
+
         return convertToDTO(saved);
     }
 
@@ -141,10 +171,9 @@ public class JobApplicationService {
             );
         }
 
-        // JWT authentication name = username
-        String username = authentication.getName();
+        String username =
+                authentication.getName();
 
-        // Find applicant using username
         Applicant applicant =
                 applicantRepository
                         .findByUserUsername(username)
@@ -222,12 +251,50 @@ public class JobApplicationService {
                                 )
                         );
 
+        // =====================================================
+        // CHANGE STATUS
+        // =====================================================
+
         application.setStatus(
                 ApplicationStatus.APPROVED
         );
 
         JobApplication updated =
                 jobApplicationRepository.save(application);
+
+        // =====================================================
+        // SEND APPROVAL EMAIL TO APPLICANT
+        // =====================================================
+
+        Applicant applicant =
+                updated.getApplicant();
+
+        Job job =
+                updated.getJob();
+
+        if (applicant != null
+                && applicant.getEmail() != null
+                && !applicant.getEmail().isBlank()) {
+
+            try {
+
+                emailService.sendApplicationApprovedEmail(
+                        applicant.getEmail(),
+                        applicant.getFullName(),
+                        job != null
+                                ? job.getCompany()
+                                : "the company",
+                        updated.getId()
+                );
+
+            } catch (Exception e) {
+
+                System.err.println(
+                        "APPLICATION APPROVAL EMAIL FAILED: "
+                                + e.getMessage()
+                );
+            }
+        }
 
         return convertToDTO(updated);
     }
@@ -254,12 +321,50 @@ public class JobApplicationService {
                                 )
                         );
 
+        // =====================================================
+        // CHANGE STATUS
+        // =====================================================
+
         application.setStatus(
                 ApplicationStatus.REJECTED
         );
 
         JobApplication updated =
                 jobApplicationRepository.save(application);
+
+        // =====================================================
+        // SEND REJECTION EMAIL TO APPLICANT
+        // =====================================================
+
+        Applicant applicant =
+                updated.getApplicant();
+
+        Job job =
+                updated.getJob();
+
+        if (applicant != null
+                && applicant.getEmail() != null
+                && !applicant.getEmail().isBlank()) {
+
+            try {
+
+                emailService.sendApplicationRejectedEmail(
+                        applicant.getEmail(),
+                        applicant.getFullName(),
+                        job != null
+                                ? job.getCompany()
+                                : "the company",
+                        updated.getId()
+                );
+
+            } catch (Exception e) {
+
+                System.err.println(
+                        "APPLICATION REJECTION EMAIL FAILED: "
+                                + e.getMessage()
+                );
+            }
+        }
 
         return convertToDTO(updated);
     }

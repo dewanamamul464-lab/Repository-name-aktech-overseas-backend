@@ -337,4 +337,108 @@ public class EmailService {
                 text
         );
     }
+
+    // =========================================================
+// APPLICATION SUBMITTED EMAIL
+// =========================================================
+
+    public void sendApplicationSubmittedEmail(
+            String applicantEmail,
+            String applicantName,
+            String companyName,
+            Long applicationId) {
+
+        String subject =
+                "Job Application Submitted - AKTech Overseas";
+
+        String text =
+                "Dear " + applicantName + ",\n\n"
+                        + "Your job application has been "
+                        + "successfully submitted.\n\n"
+                        + "Company: " + companyName + "\n"
+                        + "Application ID: " + applicationId + "\n"
+                        + "Status: PENDING\n\n"
+                        + "The employer will review your application. "
+                        + "You will receive another email when the "
+                        + "application status is updated.\n\n"
+                        + "Thank you for using AKTech Overseas.\n\n"
+                        + "Best regards,\n"
+                        + "AKTech Overseas";
+
+        sendEmail(
+                applicantEmail,
+                subject,
+                text
+        );
+    }
+
+
+// =========================================================
+// APPLICATION APPROVED EMAIL
+// =========================================================
+
+    public void sendApplicationApprovedEmail(
+            String applicantEmail,
+            String applicantName,
+            String companyName,
+            Long applicationId) {
+
+        String subject =
+                "Job Application Approved - AKTech Overseas";
+
+        String text =
+                "Dear " + applicantName + ",\n\n"
+                        + "We are pleased to inform you that your "
+                        + "job application has been APPROVED.\n\n"
+                        + "Company: " + companyName + "\n"
+                        + "Application ID: " + applicationId + "\n"
+                        + "Status: APPROVED\n\n"
+                        + "Please log in to the AKTech Overseas "
+                        + "application for more information.\n\n"
+                        + "Congratulations!\n\n"
+                        + "Best regards,\n"
+                        + "AKTech Overseas";
+
+        sendEmail(
+                applicantEmail,
+                subject,
+                text
+        );
+    }
+
+
+// =========================================================
+// APPLICATION REJECTED EMAIL
+// =========================================================
+
+    public void sendApplicationRejectedEmail(
+            String applicantEmail,
+            String applicantName,
+            String companyName,
+            Long applicationId) {
+
+        String subject =
+                "Job Application Status Update - AKTech Overseas";
+
+        String text =
+                "Dear " + applicantName + ",\n\n"
+                        + "We regret to inform you that your "
+                        + "job application was not selected by the "
+                        + "employer at this time.\n\n"
+                        + "Company: " + companyName + "\n"
+                        + "Application ID: " + applicationId + "\n"
+                        + "Status: REJECTED\n\n"
+                        + "We encourage you to continue exploring "
+                        + "other job opportunities available on "
+                        + "AKTech Overseas.\n\n"
+                        + "Thank you for using AKTech Overseas.\n\n"
+                        + "Best regards,\n"
+                        + "AKTech Overseas";
+
+        sendEmail(
+                applicantEmail,
+                subject,
+                text
+        );
+    }
 }
