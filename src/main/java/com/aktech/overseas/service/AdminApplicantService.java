@@ -1,6 +1,7 @@
 package com.aktech.overseas.service;
 
 import com.aktech.overseas.entity.Applicant;
+import com.aktech.overseas.entity.JobApplication;
 import com.aktech.overseas.entity.User;
 import com.aktech.overseas.repository.ApplicantRepository;
 import com.aktech.overseas.repository.UserRepository;
@@ -47,18 +48,31 @@ public class AdminApplicantService {
         return applicantRepository.findById(id)
                 .orElseThrow(() ->
                         new RuntimeException(
-                                "Applicant not found with id: "
-                                        + id
+                                "Applicant not found with id: " + id
                         )
                 );
     }
 
     // =========================================================
-    // DELETE APPLICANT - COMPLETE ACCOUNT DELETION
+    // DELETE APPLICANT
+    // =========================================================
+    //
+    // Deletes:
+    // 1. Applicant profile
+    // 2. Applicant's job applications
+    // 3. Linked User account
+    //
+    // No approval/rejection is required for applicants.
     // =========================================================
 
     @Transactional
     public void deleteApplicant(Long id) {
+
+        if (id == null) {
+            throw new RuntimeException(
+                    "Applicant ID is required."
+            );
+        }
 
         // -----------------------------------------------------
         // Find applicant
@@ -74,23 +88,24 @@ public class AdminApplicantService {
                         );
 
         // -----------------------------------------------------
-        // Get linked User before deleting Applicant
+        // Get linked User before deleting applicant
         // -----------------------------------------------------
 
         User user = applicant.getUser();
 
         // -----------------------------------------------------
-        // Delete Applicant
+        // Delete applicant
         //
         // Applicant has:
         //
         // @OneToMany(
+        //     mappedBy = "applicant",
         //     cascade = CascadeType.ALL,
         //     orphanRemoval = true
         // )
         //
-        // Therefore associated job applications are removed
-        // together with the applicant.
+        // Therefore the applicant's JobApplication records
+        // are removed together with the applicant.
         // -----------------------------------------------------
 
         applicantRepository.delete(applicant);
