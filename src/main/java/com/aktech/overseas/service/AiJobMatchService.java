@@ -38,7 +38,7 @@ public class AiJobMatchService {
 
         List<Job> activeJobs =
                 jobRepository
-                        .findByVerifiedTrueAndExpiryDateGreaterThanEqualOrderByIdDesc(
+                        .findByExpiryDateGreaterThanEqualOrderByIdDesc(
                                 LocalDate.now()
                         );
 

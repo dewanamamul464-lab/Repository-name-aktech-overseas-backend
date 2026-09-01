@@ -1,4 +1,5 @@
-package com.aktech.overseas.repository;
+
+        package com.aktech.overseas.repository;
 
 import com.aktech.overseas.entity.Job;
 import org.springframework.data.domain.Page;
@@ -106,7 +107,15 @@ public interface JobRepository extends JpaRepository<Job, Long> {
     );
 
     // =========================================================
-    // VERIFIED, ACTIVE JOBS FOR AI MATCHING
+    // ACTIVE JOBS FOR AI MATCHING
+    // =========================================================
+
+    List<Job> findByExpiryDateGreaterThanEqualOrderByIdDesc(
+            LocalDate expiryDate
+    );
+
+    // =========================================================
+    // VERIFIED + ACTIVE JOBS
     // =========================================================
 
     List<Job> findByVerifiedTrueAndExpiryDateGreaterThanEqualOrderByIdDesc(
@@ -220,3 +229,4 @@ public interface JobRepository extends JpaRepository<Job, Long> {
             String externalJobId
     );
 }
+
