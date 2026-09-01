@@ -1,4 +1,5 @@
-package com.aktech.overseas.controller;
+
+        package com.aktech.overseas.controller;
 
 import com.aktech.overseas.dto.AiJobMatchDTO;
 import com.aktech.overseas.dto.ApplicantDTO;
@@ -85,9 +86,13 @@ public class ApplicantController {
     @GetMapping("/{id}/recommended-jobs")
     @PreAuthorize("hasRole('APPLICANT')")
     public List<AiJobMatchDTO> getRecommendedJobs(
-            @PathVariable Long id
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "0") int page
     ) {
-        return aiJobMatchService.getRecommendedJobs(id);
+        return aiJobMatchService.getRecommendedJobs(
+                id,
+                page
+        );
     }
 
     // ==========================
@@ -185,3 +190,4 @@ public class ApplicantController {
         return ResponseEntity.ok("Applicant deleted successfully.");
     }
 }
+
