@@ -1,7 +1,9 @@
 package com.aktech.overseas.controller;
 
+import com.aktech.overseas.dto.AiJobMatchDTO;
 import com.aktech.overseas.dto.ApplicantDTO;
 import com.aktech.overseas.dto.FileUploadResponse;
+import com.aktech.overseas.service.AiJobMatchService;
 import com.aktech.overseas.service.ApplicantService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -18,9 +20,14 @@ import java.util.Map;
 public class ApplicantController {
 
     private final ApplicantService applicantService;
+    private final AiJobMatchService aiJobMatchService;
 
-    public ApplicantController(ApplicantService applicantService) {
+    public ApplicantController(
+            ApplicantService applicantService,
+            AiJobMatchService aiJobMatchService
+    ) {
         this.applicantService = applicantService;
+        this.aiJobMatchService = aiJobMatchService;
     }
 
     // ==========================
@@ -29,8 +36,8 @@ public class ApplicantController {
     @PostMapping
     @PreAuthorize("hasRole('APPLICANT')")
     public ApplicantDTO saveApplicant(
-            @Valid @RequestBody ApplicantDTO applicantDTO) {
-
+            @Valid @RequestBody ApplicantDTO applicantDTO
+    ) {
         return applicantService.saveApplicant(applicantDTO);
     }
 
@@ -40,8 +47,8 @@ public class ApplicantController {
     @PostMapping(value = "/upload-cv", consumes = "multipart/form-data")
     @PreAuthorize("hasRole('APPLICANT')")
     public ResponseEntity<Map<String, Object>> uploadCV(
-            @RequestParam("file") MultipartFile file) {
-
+            @RequestParam("file") MultipartFile file
+    ) {
         FileUploadResponse uploadResponse =
                 applicantService.uploadCV(file);
 
@@ -61,8 +68,8 @@ public class ApplicantController {
     @PostMapping(value = "/me/profile-image", consumes = "multipart/form-data")
     @PreAuthorize("hasRole('APPLICANT')")
     public ResponseEntity<Map<String, String>> uploadProfileImage(
-            @RequestParam("file") MultipartFile file) {
-
+            @RequestParam("file") MultipartFile file
+    ) {
         String imageUrl = applicantService.uploadProfileImage(file);
 
         Map<String, String> response = new HashMap<>();
@@ -73,13 +80,24 @@ public class ApplicantController {
     }
 
     // ==========================
+    // Applicant: Get AI Job Matches
+    // ==========================
+    @GetMapping("/{id}/recommended-jobs")
+    @PreAuthorize("hasRole('APPLICANT')")
+    public List<AiJobMatchDTO> getRecommendedJobs(
+            @PathVariable Long id
+    ) {
+        return aiJobMatchService.getRecommendedJobs(id);
+    }
+
+    // ==========================
     // Applicant / Employer / Admin: View CV By Applicant ID
     // ==========================
     @GetMapping("/{id}/cv")
     @PreAuthorize("hasAnyRole('APPLICANT','EMPLOYER','ADMIN')")
     public ResponseEntity<Map<String, String>> viewCV(
-            @PathVariable Long id) {
-
+            @PathVariable Long id
+    ) {
         String cvUrl = applicantService.downloadCV(id);
 
         Map<String, String> response = new HashMap<>();
@@ -94,7 +112,6 @@ public class ApplicantController {
     @GetMapping("/me/cv")
     @PreAuthorize("hasRole('APPLICANT')")
     public ResponseEntity<Map<String, String>> getMyCV() {
-
         String cvUrl = applicantService.getMyCV();
 
         Map<String, String> response = new HashMap<>();
@@ -109,7 +126,6 @@ public class ApplicantController {
     @GetMapping("/me")
     @PreAuthorize("hasRole('APPLICANT')")
     public ApplicantDTO getMyProfile() {
-
         return applicantService.getMyProfile();
     }
 
@@ -119,8 +135,8 @@ public class ApplicantController {
     @PutMapping("/me")
     @PreAuthorize("hasRole('APPLICANT')")
     public ApplicantDTO updateMyProfile(
-            @Valid @RequestBody ApplicantDTO applicantDTO) {
-
+            @Valid @RequestBody ApplicantDTO applicantDTO
+    ) {
         return applicantService.updateMyProfile(applicantDTO);
     }
 
@@ -130,7 +146,6 @@ public class ApplicantController {
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public List<ApplicantDTO> getAllApplicants() {
-
         return applicantService.getAllApplicants();
     }
 
@@ -140,8 +155,8 @@ public class ApplicantController {
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ApplicantDTO getApplicantById(
-            @PathVariable Long id) {
-
+            @PathVariable Long id
+    ) {
         return applicantService.getApplicantById(id);
     }
 
@@ -152,8 +167,8 @@ public class ApplicantController {
     @PreAuthorize("hasRole('ADMIN')")
     public ApplicantDTO updateApplicant(
             @PathVariable Long id,
-            @Valid @RequestBody ApplicantDTO applicantDTO) {
-
+            @Valid @RequestBody ApplicantDTO applicantDTO
+    ) {
         return applicantService.updateApplicant(id, applicantDTO);
     }
 
@@ -163,8 +178,8 @@ public class ApplicantController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> deleteApplicant(
-            @PathVariable Long id) {
-
+            @PathVariable Long id
+    ) {
         applicantService.deleteApplicant(id);
 
         return ResponseEntity.ok("Applicant deleted successfully.");

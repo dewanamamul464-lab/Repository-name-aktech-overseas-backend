@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface JobRepository extends JpaRepository<Job, Long> {
@@ -45,7 +46,6 @@ public interface JobRepository extends JpaRepository<Job, Long> {
 
     // =========================================================
     // JOBS BY TYPE - PAGINATED
-    // Used by JobService.getJobs()
     // =========================================================
 
     @Query("""
@@ -60,7 +60,6 @@ public interface JobRepository extends JpaRepository<Job, Long> {
 
     // =========================================================
     // SEARCH + OPTIONAL JOB TYPE
-    // Used by JobService.getJobs()
     // =========================================================
 
     @Query("""
@@ -104,6 +103,14 @@ public interface JobRepository extends JpaRepository<Job, Long> {
     Page<Job> findByVerifiedTrueAndJobTypeIgnoreCase(
             String jobType,
             Pageable pageable
+    );
+
+    // =========================================================
+    // VERIFIED, ACTIVE JOBS FOR AI MATCHING
+    // =========================================================
+
+    List<Job> findByVerifiedTrueAndExpiryDateGreaterThanEqualOrderByIdDesc(
+            LocalDate expiryDate
     );
 
     // =========================================================
@@ -206,7 +213,6 @@ public interface JobRepository extends JpaRepository<Job, Long> {
 
     // =========================================================
     // EXTERNAL JOB DUPLICATE CHECK
-    // Used by JobicyJobService
     // =========================================================
 
     boolean existsBySourceAndExternalJobId(
