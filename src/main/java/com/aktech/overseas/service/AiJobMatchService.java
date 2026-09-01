@@ -1,4 +1,5 @@
-package com.aktech.overseas.service;
+
+        package com.aktech.overseas.service;
 
 import com.aktech.overseas.dto.AiJobMatchDTO;
 import com.aktech.overseas.entity.Applicant;
@@ -23,6 +24,9 @@ public class AiJobMatchService {
     private final ApplicantRepository applicantRepository;
     private final JobRepository jobRepository;
 
+    private static final int PAGE_SIZE = 20;
+    private static final int PROCESS_BATCH_SIZE = 100;
+
     public AiJobMatchService(
             ApplicantRepository applicantRepository,
             JobRepository jobRepository
@@ -31,10 +35,29 @@ public class AiJobMatchService {
         this.jobRepository = jobRepository;
     }
 
+    // =========================================================
+    // GET AI RECOMMENDATIONS
+    //
+    // page = 0 -> first 20 recommendations
+    // page = 1 -> next 20 recommendations
+    // page = 2 -> next 20 recommendations
+    //
+    // =========================================================
+
     public List<AiJobMatchDTO> getRecommendedJobs(
-            Long applicantId
+            Long applicantId,
+            int page
     ) {
+
         Applicant applicant = getCurrentApplicant(applicantId);
+
+        if (page < 0) {
+            page = 0;
+        }
+
+        // -----------------------------------------------------
+        // Load active jobs
+        // -----------------------------------------------------
 
         List<Job> activeJobs =
                 jobRepository
@@ -42,20 +65,70 @@ public class AiJobMatchService {
                                 LocalDate.now()
                         );
 
+        // -----------------------------------------------------
+        // Calculate matches in batches
+        // -----------------------------------------------------
+
         List<AiJobMatchDTO> recommendations =
                 new ArrayList<>();
 
-        for (Job job : activeJobs) {
-            AiJobMatchDTO match = createMatch(
-                    applicant,
-                    job
-            );
+        List<AiJobMatchDTO> batchResults =
+                new ArrayList<>();
 
-            // Show jobs with at least a small match.
+        for (Job job : activeJobs) {
+
+            AiJobMatchDTO match =
+                    createMatch(
+                            applicant,
+                            job
+                    );
+
             if (match.getMatchPercentage() >= 20) {
-                recommendations.add(match);
+                batchResults.add(match);
+            }
+
+            // -------------------------------------------------
+            // Process batch
+            // -------------------------------------------------
+
+            if (batchResults.size() >= PROCESS_BATCH_SIZE) {
+
+                recommendations.addAll(
+                        batchResults
+                );
+
+                batchResults.clear();
+
+                // Keep memory under control.
+                recommendations.sort(
+                        Comparator.comparing(
+                                AiJobMatchDTO::getMatchPercentage
+                        ).reversed()
+                );
+
+                if (recommendations.size() > 200) {
+                    recommendations =
+                            new ArrayList<>(
+                                    recommendations.subList(
+                                            0,
+                                            200
+                                    )
+                            );
+                }
             }
         }
+
+        // -----------------------------------------------------
+        // Add remaining matches
+        // -----------------------------------------------------
+
+        recommendations.addAll(
+                batchResults
+        );
+
+        // -----------------------------------------------------
+        // Final sort
+        // -----------------------------------------------------
 
         recommendations.sort(
                 Comparator.comparing(
@@ -63,31 +136,58 @@ public class AiJobMatchService {
                 ).reversed()
         );
 
-        // Return the best 30 recommendations.
-        if (recommendations.size() > 30) {
-            return recommendations.subList(0, 30);
+        // -----------------------------------------------------
+        // Pagination
+        // -----------------------------------------------------
+
+        int startIndex =
+                page * PAGE_SIZE;
+
+        if (startIndex >= recommendations.size()) {
+            return new ArrayList<>();
         }
 
-        return recommendations;
+        int endIndex =
+                Math.min(
+                        startIndex + PAGE_SIZE,
+                        recommendations.size()
+                );
+
+        return new ArrayList<>(
+                recommendations.subList(
+                        startIndex,
+                        endIndex
+                )
+        );
     }
+
+    // =========================================================
+    // CURRENT APPLICANT
+    // =========================================================
 
     private Applicant getCurrentApplicant(
             Long requestedApplicantId
     ) {
-        String username = SecurityContextHolder
-                .getContext()
-                .getAuthentication()
-                .getName();
 
-        Applicant applicant = applicantRepository
-                .findByUserUsername(username)
-                .orElseThrow(() ->
-                        new RuntimeException(
-                                "Applicant profile not found."
-                        )
-                );
+        String username =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication()
+                        .getName();
 
-        if (!applicant.getId().equals(requestedApplicantId)) {
+        Applicant applicant =
+                applicantRepository
+                        .findByUserUsername(username)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Applicant profile not found."
+                                )
+                        );
+
+        if (!applicant.getId().equals(
+                requestedApplicantId
+        )) {
+
             throw new AccessDeniedException(
                     "You can only view your own job recommendations."
             );
@@ -96,35 +196,50 @@ public class AiJobMatchService {
         return applicant;
     }
 
+    // =========================================================
+    // CREATE MATCH
+    // =========================================================
+
     private AiJobMatchDTO createMatch(
             Applicant applicant,
             Job job
     ) {
-        List<String> applicantSkills = splitValues(
-                applicant.getSkills()
-        );
 
-        String jobText = normalize(
-                join(
-                        job.getPosition(),
-                        job.getRequirements(),
-                        job.getDescription()
-                )
-        );
+        List<String> applicantSkills =
+                splitValues(
+                        applicant.getSkills()
+                );
 
-        List<String> matchedSkills = new ArrayList<>();
+        String jobText =
+                normalize(
+                        join(
+                                job.getPosition(),
+                                job.getRequirements(),
+                                job.getDescription()
+                        )
+                );
+
+        List<String> matchedSkills =
+                new ArrayList<>();
 
         for (String skill : applicantSkills) {
-            if (jobText.contains(
-                    normalize(skill)
+
+            String normalizedSkill =
+                    normalize(skill);
+
+            if (!normalizedSkill.isBlank()
+                    && jobText.contains(
+                    normalizedSkill
             )) {
+
                 matchedSkills.add(skill);
             }
         }
 
-        List<String> jobRequirements = splitValues(
-                job.getRequirements()
-        );
+        List<String> jobRequirements =
+                splitValues(
+                        job.getRequirements()
+                );
 
         List<String> missingSkills =
                 findMissingRequirements(
@@ -132,28 +247,32 @@ public class AiJobMatchService {
                         jobRequirements
                 );
 
-        int skillScore = calculateSkillScore(
-                applicantSkills,
-                matchedSkills
-        );
+        int skillScore =
+                calculateSkillScore(
+                        applicantSkills,
+                        matchedSkills
+                );
 
-        int experienceScore = calculateExperienceScore(
-                applicant.getExperience(),
-                job.getExperience()
-        );
+        int experienceScore =
+                calculateExperienceScore(
+                        applicant.getExperience(),
+                        job.getExperience()
+                );
 
-        int matchPercentage = Math.min(
-                100,
-                skillScore + experienceScore
-        );
+        int matchPercentage =
+                Math.min(
+                        100,
+                        skillScore + experienceScore
+                );
 
-        String reason = buildReason(
-                applicant,
-                job,
-                matchedSkills,
-                missingSkills,
-                matchPercentage
-        );
+        String reason =
+                buildReason(
+                        applicant,
+                        job,
+                        matchedSkills,
+                        missingSkills,
+                        matchPercentage
+                );
 
         return new AiJobMatchDTO(
                 job.getId(),
@@ -172,10 +291,15 @@ public class AiJobMatchService {
         );
     }
 
+    // =========================================================
+    // SKILL SCORE
+    // =========================================================
+
     private int calculateSkillScore(
             List<String> applicantSkills,
             List<String> matchedSkills
     ) {
+
         if (applicantSkills.isEmpty()) {
             return 0;
         }
@@ -184,23 +308,30 @@ public class AiJobMatchService {
                 (double) matchedSkills.size()
                         / applicantSkills.size();
 
-        return (int) Math.round(ratio * 70);
+        return (int) Math.round(
+                ratio * 70
+        );
     }
+
+    // =========================================================
+    // EXPERIENCE SCORE
+    // =========================================================
 
     private int calculateExperienceScore(
             String applicantExperience,
             String jobExperience
     ) {
-        int applicantYears = extractYears(
-                applicantExperience
-        );
 
-        int requiredYears = extractYears(
-                jobExperience
-        );
+        int applicantYears =
+                extractYears(
+                        applicantExperience
+                );
 
-        // If the job has no stated experience requirement,
-        // award the experience portion.
+        int requiredYears =
+                extractYears(
+                        jobExperience
+                );
+
         if (requiredYears == 0) {
             return 30;
         }
@@ -216,13 +347,21 @@ public class AiJobMatchService {
         return 0;
     }
 
+    // =========================================================
+    // MISSING REQUIREMENTS
+    // =========================================================
+
     private List<String> findMissingRequirements(
             List<String> applicantSkills,
             List<String> jobRequirements
     ) {
-        Set<String> missing = new LinkedHashSet<>();
 
-        for (String requirement : jobRequirements) {
+        Set<String> missing =
+                new LinkedHashSet<>();
+
+        for (String requirement :
+                jobRequirements) {
+
             String normalizedRequirement =
                     normalize(requirement);
 
@@ -230,20 +369,30 @@ public class AiJobMatchService {
                 continue;
             }
 
-            boolean found = applicantSkills.stream()
-                    .map(this::normalize)
-                    .anyMatch(skill ->
-                            skill.contains(normalizedRequirement)
-                                    || normalizedRequirement.contains(skill)
-                    );
+            boolean found =
+                    applicantSkills.stream()
+                            .map(this::normalize)
+                            .anyMatch(skill ->
+                                    skill.contains(
+                                            normalizedRequirement
+                                    )
+                                            || normalizedRequirement
+                                            .contains(skill)
+                            );
 
             if (!found) {
                 missing.add(requirement);
             }
         }
 
-        return new ArrayList<>(missing);
+        return new ArrayList<>(
+                missing
+        );
     }
+
+    // =========================================================
+    // MATCH REASON
+    // =========================================================
 
     private String buildReason(
             Applicant applicant,
@@ -252,7 +401,9 @@ public class AiJobMatchService {
             List<String> missingSkills,
             int score
     ) {
+
         if (score >= 80) {
+
             return "Strong match for your profile. "
                     + "Your skills and experience align well with "
                     + valueOrDefault(
@@ -263,16 +414,19 @@ public class AiJobMatchService {
         }
 
         if (score >= 60) {
+
             return "Good match based on your listed skills and experience. "
                     + "Review the job requirements before applying.";
         }
 
         if (!matchedSkills.isEmpty()) {
+
             return "Partial match. You have relevant skills for this role, "
                     + "but review the missing requirements before applying.";
         }
 
         if (!missingSkills.isEmpty()) {
+
             return "This role may need additional skills or experience "
                     + "before applying.";
         }
@@ -281,71 +435,110 @@ public class AiJobMatchService {
                 + "Please review the full requirements.";
     }
 
+    // =========================================================
+    // SPLIT VALUES
+    // =========================================================
+
     private List<String> splitValues(
             String value
     ) {
+
         if (value == null || value.isBlank()) {
             return new ArrayList<>();
         }
 
-        String[] parts = value.split(
-                "[,;\\n|/]"
-        );
+        String[] parts =
+                value.split(
+                        "[,;\\n|/]"
+                );
 
         Set<String> uniqueValues =
                 new LinkedHashSet<>();
 
         for (String part : parts) {
-            String cleaned = part.trim();
+
+            String cleaned =
+                    part.trim();
 
             if (!cleaned.isBlank()) {
                 uniqueValues.add(cleaned);
             }
         }
 
-        return new ArrayList<>(uniqueValues);
+        return new ArrayList<>(
+                uniqueValues
+        );
     }
+
+    // =========================================================
+    // EXTRACT YEARS
+    // =========================================================
 
     private int extractYears(
             String experience
     ) {
-        if (experience == null || experience.isBlank()) {
+
+        if (experience == null
+                || experience.isBlank()) {
+
             return 0;
         }
 
-        String digits = experience.replaceAll(
-                "[^0-9]",
-                ""
-        );
+        String digits =
+                experience.replaceAll(
+                        "[^0-9]",
+                        ""
+                );
 
         if (digits.isBlank()) {
             return 0;
         }
 
         try {
-            return Integer.parseInt(digits);
+
+            return Integer.parseInt(
+                    digits
+            );
+
         } catch (NumberFormatException exception) {
+
             return 0;
         }
     }
 
+    // =========================================================
+    // JOIN
+    // =========================================================
+
     private String join(
             String... values
     ) {
-        StringBuilder builder = new StringBuilder();
+
+        StringBuilder builder =
+                new StringBuilder();
 
         for (String value : values) {
-            if (value != null && !value.isBlank()) {
-                builder.append(value).append(" ");
+
+            if (value != null
+                    && !value.isBlank()) {
+
+                builder
+                        .append(value)
+                        .append(" ");
             }
         }
 
         return builder.toString();
     }
 
+    // =========================================================
+    // NORMALIZE
+    // =========================================================
+
     private String normalize(
             String value
     ) {
+
         if (value == null) {
             return "";
         }
@@ -353,17 +546,28 @@ public class AiJobMatchService {
         return value
                 .toLowerCase(Locale.ROOT)
                 .trim()
-                .replaceAll("\\s+", " ");
+                .replaceAll(
+                        "\\s+",
+                        " "
+                );
     }
+
+    // =========================================================
+    // DEFAULT VALUE
+    // =========================================================
 
     private String valueOrDefault(
             String value,
             String defaultValue
     ) {
-        if (value == null || value.isBlank()) {
+
+        if (value == null
+                || value.isBlank()) {
+
             return defaultValue;
         }
 
         return value;
     }
 }
+
