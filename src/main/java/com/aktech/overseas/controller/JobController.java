@@ -1,4 +1,5 @@
-package com.aktech.overseas.controller;
+
+        package com.aktech.overseas.controller;
 
 import com.aktech.overseas.entity.Job;
 import com.aktech.overseas.service.JobService;
@@ -53,6 +54,30 @@ public class JobController {
         );
 
         return ResponseEntity.ok(jobs);
+    }
+
+    // =========================================================
+    // GET SINGLE JOB BY ID
+    // =========================================================
+    //
+    // GET /api/jobs/{id}
+    //
+    // Example:
+    // GET /api/jobs/3496
+    //
+    // Used by Flutter AI Recommendations when the user
+    // taps "View Job".
+    //
+    // =========================================================
+
+    @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Job> getJobById(
+            @PathVariable Long id) {
+
+        Job job = jobService.getJobById(id);
+
+        return ResponseEntity.ok(job);
     }
 
     // =========================================================
@@ -121,3 +146,4 @@ public class JobController {
         return ResponseEntity.ok(jobs);
     }
 }
+
