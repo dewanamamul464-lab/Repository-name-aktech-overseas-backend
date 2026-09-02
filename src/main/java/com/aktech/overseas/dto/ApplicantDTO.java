@@ -40,11 +40,11 @@ public class ApplicantDTO {
     private String country;
 
     @NotBlank(message = "Experience is required")
-    @Size(max = 100, message = "Experience cannot exceed 100 characters")
+    @Size(max = 1000, message = "Experience cannot exceed 100 characters")
     private String experience;
 
     @NotBlank(message = "Skills are required")
-    @Size(max = 255, message = "Skills cannot exceed 255 characters")
+    @Size(max = 1000, message = "Skills cannot exceed 255 characters")
     private String skills;
 
     @Size(max = 50, message = "Passport number cannot exceed 50 characters")
