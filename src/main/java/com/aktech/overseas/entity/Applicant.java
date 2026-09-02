@@ -1,4 +1,5 @@
-package com.aktech.overseas.entity;
+
+        package com.aktech.overseas.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -22,29 +23,36 @@ public class Applicant {
     // APPLICANT INFORMATION
     // =========================================================
 
+    @Column(length = 255)
     private String fullName;
 
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = false, length = 255)
     private String email;
 
+    @Column(length = 255)
     private String phone;
 
+    @Column(length = 255)
     private String country;
 
+    @Column(length = 255)
     private String experience;
 
+    @Column(length = 255)
     private String skills;
 
-    @Column(unique = true)
+    @Column(unique = true, length = 255)
     private String passportNumber;
 
     // =========================================================
     // CV INFORMATION
     // =========================================================
 
+    @Column(length = 255)
     private String cvFileName;
 
-    @Column(length = 1000)
+    // Cloudinary URL can be longer than 255 characters
+    @Column(columnDefinition = "TEXT")
     private String cvUrl;
 
     private LocalDateTime cvUploadedAt;
@@ -53,7 +61,8 @@ public class Applicant {
     // PROFILE IMAGE
     // =========================================================
 
-    @Column(length = 1000)
+    // Cloudinary URL can be longer than 255 characters
+    @Column(columnDefinition = "TEXT")
     private String profileImage;
 
     // =========================================================
@@ -102,7 +111,7 @@ public class Applicant {
     }
 
     // =========================================================
-    // GET ID
+    // GET / SET ID
     // =========================================================
 
     public Long getId() {
@@ -114,7 +123,7 @@ public class Applicant {
     }
 
     // =========================================================
-    // GET FULL NAME
+    // GET / SET FULL NAME
     // =========================================================
 
     public String getFullName() {
@@ -126,7 +135,7 @@ public class Applicant {
     }
 
     // =========================================================
-    // GET EMAIL
+    // GET / SET EMAIL
     // =========================================================
 
     public String getEmail() {
@@ -138,7 +147,7 @@ public class Applicant {
     }
 
     // =========================================================
-    // GET PHONE
+    // GET / SET PHONE
     // =========================================================
 
     public String getPhone() {
@@ -150,7 +159,7 @@ public class Applicant {
     }
 
     // =========================================================
-    // GET COUNTRY
+    // GET / SET COUNTRY
     // =========================================================
 
     public String getCountry() {
@@ -162,7 +171,7 @@ public class Applicant {
     }
 
     // =========================================================
-    // GET EXPERIENCE
+    // GET / SET EXPERIENCE
     // =========================================================
 
     public String getExperience() {
@@ -174,7 +183,7 @@ public class Applicant {
     }
 
     // =========================================================
-    // GET SKILLS
+    // GET / SET SKILLS
     // =========================================================
 
     public String getSkills() {
@@ -186,7 +195,7 @@ public class Applicant {
     }
 
     // =========================================================
-    // GET PASSPORT NUMBER
+    // GET / SET PASSPORT NUMBER
     // =========================================================
 
     public String getPassportNumber() {
@@ -198,7 +207,7 @@ public class Applicant {
     }
 
     // =========================================================
-    // GET CV FILE NAME
+    // GET / SET CV FILE NAME
     // =========================================================
 
     public String getCvFileName() {
@@ -210,7 +219,7 @@ public class Applicant {
     }
 
     // =========================================================
-    // GET CV URL
+    // GET / SET CV URL
     // =========================================================
 
     public String getCvUrl() {
@@ -222,7 +231,7 @@ public class Applicant {
     }
 
     // =========================================================
-    // GET CV UPLOADED DATE
+    // GET / SET CV UPLOADED DATE
     // =========================================================
 
     public LocalDateTime getCvUploadedAt() {
@@ -234,7 +243,7 @@ public class Applicant {
     }
 
     // =========================================================
-    // GET PROFILE IMAGE
+    // GET / SET PROFILE IMAGE
     // =========================================================
 
     public String getProfileImage() {
@@ -246,7 +255,7 @@ public class Applicant {
     }
 
     // =========================================================
-    // GET USER
+    // GET / SET USER
     // =========================================================
 
     public User getUser() {
@@ -258,16 +267,15 @@ public class Applicant {
     }
 
     // =========================================================
-    // GET APPLICATIONS
+    // GET / SET APPLICATIONS
     // =========================================================
 
     public List<JobApplication> getApplications() {
         return applications;
     }
 
-    public void setApplications(
-            List<JobApplication> applications) {
-
+    public void setApplications(List<JobApplication> applications) {
         this.applications = applications;
     }
 }
+
